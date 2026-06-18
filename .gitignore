@@ -43,5 +43,7 @@
 /.vs/
 /Debug/
 /Release/
-/SDL3-SDK/
 /x64/
+
+/SDL3-SDK/Include
+/SDL3-SDK/Lib

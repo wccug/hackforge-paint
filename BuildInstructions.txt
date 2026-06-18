@@ -4,6 +4,6 @@
 
 3. Unzip the file.
 
-4. Copy the contents here, so that this folder directly contains the subfolders "include" and "lib".
+4. Copy the contents to SDK3-SDK/, so that folder directly contains the subfolders "include" and "lib".
 
 That's it. If you use the development package, the 'lib' folder also contains the runtime DLL.
