@@ -7,10 +7,17 @@ cmake_minimum_required(VERSION 3.10)
 
 project(hackforge-paint LANGUAGES CXX)
 
+file(GLOB SOURCES
+    src/internal/*.h
+    src/internal/*.cpp
+    src/internal/**/*.h
+    src/internal/**/*.cpp
+)
+
 # Add an executable to our project (use the same name because why
 # not).  List our source files.
 
-add_executable(hackforge-paint src/main.cpp)
+add_executable(hackforge-paint src/main.cpp ${SOURCES})
 
 # Find and link in the SDL3 library. For debian-based Linux
 # distributions, execute `sudo apt install libsdl3-dev` For windows

@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <string>
 
+#include "internal/Pointer.h"
+
 namespace hackforge {
 
 static SDL_Window* window = nullptr;
@@ -14,9 +16,7 @@ static SDL_Renderer* renderer = nullptr;
 static constexpr int window_width = 800;
 static constexpr int window_height = 600;
 
-static float lastX = 0;
-static float lastY = 0;
-static bool penDown = false;
+static hackforge::internal::Pointer* pointer = nullptr;
 
 // I doubt creating a namespace in a namespace is the best idea here ...
 namespace button {
@@ -38,6 +38,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
         SDL_Log("Couldn't create window and renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
+    hackforge::pointer = new hackforge::internal::Pointer();
 
     // Initialize the target to black
     SDL_SetRenderDrawColor(hackforge::renderer, 0, 0, 0, 255);
@@ -148,19 +150,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;
     }
-    else if (event->type == SDL_EVENT_MOUSE_MOTION)
-    {
-        hackforge::lastX = event->motion.x;
-        hackforge::lastY = event->motion.y;
-    }
-    else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-    {
-        hackforge::penDown = true;
-    }
-    else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP)
-    {
-        hackforge::penDown = false;
-    }
+    hackforge::pointer->handleEvent(event);
     return SDL_APP_CONTINUE;
 }
 
@@ -168,12 +158,12 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
     // Draw the pen
-    if (hackforge::penDown)
+    if (hackforge::pointer->isLeftButtonPressed())
     {
         SDL_SetRenderScale(hackforge::renderer, 1, 1);
         SDL_FRect rect{};
-        rect.x = hackforge::lastX;
-        rect.y = hackforge::lastY;
+        rect.x = hackforge::pointer->getLastX();
+        rect.y = hackforge::pointer->getLastY();
         rect.w = 10;
         rect.h = 10;
         SDL_SetRenderDrawColor(hackforge::renderer, 255, 255, 255, 255);
@@ -213,12 +203,12 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         };
 
         bool isOverTexture = (
-            hackforge::lastX >= position.x && hackforge::lastX <= position.x + position.w
+            hackforge::pointer->getLastX() >= position.x && hackforge::pointer->getLastX() <= position.x + position.w
         ) && (
-            hackforge::lastY >= position.y && hackforge::lastY <= position.y + position.h
+            hackforge::pointer->getLastY() >= position.y && hackforge::pointer->getLastY() <= position.y + position.h
         );
 
-        if (hackforge::penDown && isOverTexture) {
+        if (hackforge::pointer->isLeftButtonPressed() && isOverTexture) {
             // Flipping the texture creates the button press effect
             SDL_RenderTextureRotated(
                 hackforge::renderer,
@@ -242,5 +232,6 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
+    delete hackforge::pointer;
     SDL_DestroyTexture(hackforge::button::texture);
 }
