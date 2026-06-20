@@ -1,9 +1,36 @@
-1. Go to an SDL release from e.g., https://github.com/libsdl-org/SDL/releases
+Build Instructions
+==================
 
-2. Choose the development package, e.g., SDL3-devel-3.4.4-VC.zip 
+Building on Windows
+-------------------
+
+1. Go to an SDL release from e.g.,
+   https://github.com/libsdl-org/SDL/releases
+
+2. Choose the development package, e.g., SDL3-devel-3.4.4-VC.zip
 
 3. Unzip the file.
 
 4. Copy the contents to SDK3-SDK/, so that folder directly contains the subfolders "include" and "lib".
 
-That's it. If you use the development package, the 'lib' folder also contains the runtime DLL.
+That's it. If you use the development package, the 'lib' folder also
+contains the runtime DLL.
+
+Building on Linux
+-----------------
+
+1. Install SDL3 from your package manager. Make sure to get the
+   headers for building software.  On Debian-based distros this means
+   installing the package `libsdl3-dev` instead of just `libsdl3`.
+
+2. Create a build directory under the root directory of the
+   checked-out repository, and run cmake therein:
+
+   > mkdir build && cd build && cmake ..
+
+   Notice the two dots above. This is a path parameter, which must be
+   the top-level directory where the CMakeLists.txt file resides.
+
+3. Build the executable. With the above cmake invocation, it should
+   suffice to just type `make` in your build directory. Alternatively,
+   run `cmake --build . --target hackforge-paint`
