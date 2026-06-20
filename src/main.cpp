@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_pixels.h>
 
+#include <cstdint>
 #include <string>
 
 namespace hackforge {
@@ -57,7 +58,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
         return SDL_APP_FAILURE;
     }
 
-    Uint32 backgroudColor = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 192, 192, 192, 255);
+    std::uint32_t backgroudColor = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 192, 192, 192, 255);
 
     bool success = SDL_FillSurfaceRect(
         hackforge::button::surface,
@@ -72,8 +73,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     // Creates the "buttons" border bevel
     {
-        Uint32 hilightColour = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 229, 229, 229, 255);
-        Uint32 shadowColour = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 153, 153, 153, 225);
+        std::uint32_t hilightColour = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 229, 229, 229, 255);
+        std::uint32_t shadowColour = SDL_MapRGBA(SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32), NULL, 153, 153, 153, 225);
 
         // TODO: This should probably be a class but I don't know how to define one correctly (yet)
         // Need to read Bjarne Stroustrup's book: A Tour of C++
@@ -84,7 +85,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
             SDL_Rect{ .x = 0, .y = hackforge::button::height - 1, .w = hackforge::button::width, .h = 1 },
         };
 
-        Uint32 colours[] = {
+        std::uint32_t colours[] = {
             hilightColour,
             hilightColour,
             shadowColour,
