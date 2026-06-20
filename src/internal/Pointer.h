@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL_events.h>
+#include "Interactable.h"
 
 namespace hackforge {
     namespace internal {
@@ -8,10 +9,10 @@ namespace hackforge {
     }
 }
 
-class hackforge::internal::Pointer {
+class hackforge::internal::Pointer : public hackforge::internal::Interactable {
     public:
         Pointer();
-        void handleEvent(SDL_Event* event);
+        void handleEvent(SDL_Event* event) override;
         float getLastX();
         float getLastY();
         bool isLeftButtonPressed();
