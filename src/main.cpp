@@ -2,7 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
 #include <string>
-#include "win32_colorpicker.h"
+#include "color_picker.hpp"
 
 namespace hackforge {
     static SDL_Window* window = nullptr;
@@ -61,13 +61,13 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
             if (mx >= hackforge::penBtnBounds.x && mx <= hackforge::penBtnBounds.x + hackforge::penBtnBounds.w &&
                 my >= hackforge::penBtnBounds.y && my <= hackforge::penBtnBounds.y + hackforge::penBtnBounds.h) {
 
-                hackforge::penColor = OpenNativeColorPicker(hackforge::window, hackforge::penColor);
+                hackforge::penColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
             }
             // 2. Check if user clicked the "Set Button Color" button bounding frame
             else if (mx >= hackforge::uiBtnBounds.x && mx <= hackforge::uiBtnBounds.x + hackforge::uiBtnBounds.w &&
                 my >= hackforge::uiBtnBounds.y && my <= hackforge::uiBtnBounds.y + hackforge::uiBtnBounds.h) {
 
-                hackforge::buttonColor = OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
+                hackforge::buttonColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
             }
             // 3. Otherwise, they are drawing on the canvas space below the menu layout (y > 55)
             else if (my > 55.0f) {
