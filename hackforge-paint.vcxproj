@@ -168,7 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
-    <ClCompile Include="src\win32_colorpicker.cpp" />
+    <ClCompile Include="src\color_picker_win32.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,7 +10,7 @@ project(hackforge-paint LANGUAGES CXX)
 # Add an executable to our project (use the same name because why
 # not).  List our source files.
 
-add_executable(hackforge-paint src/main.cpp)
+add_executable(hackforge-paint src/main.cpp src/color_picker_linux.cpp)
 
 # Find and link in the SDL3 library. For debian-based Linux
 # distributions, execute `sudo apt install libsdl3-dev` For windows

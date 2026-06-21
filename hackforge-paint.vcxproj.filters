@@ -18,7 +18,7 @@
     <ClCompile Include="src/main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32_colorpicker.cpp">
+    <ClCompile Include="src\color_picker_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
