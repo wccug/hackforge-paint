@@ -1,4 +1,4 @@
-# Prerequisites
+  # Prerequisites
 *.d
 
 # Compiled Object files
@@ -45,5 +45,11 @@
 /Release/
 /x64/
 
+# Temporary text editor files (Emacs/Vim backups)
+*~
+\#*\#
+.\#*
+
+# SDL3 SDK Libraries
 /SDL3-SDK/Include
 /SDL3-SDK/Lib
