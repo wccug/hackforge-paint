@@ -7,6 +7,7 @@
 namespace hackforge {
     static SDL_Window* window = nullptr;
     static SDL_Renderer* renderer = nullptr;
+    SDL_Texture* canvas = nullptr;
     static constexpr int window_width = 800;
     static constexpr int window_height = 600;
 
@@ -36,6 +37,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     // Initialize the canvas target background color to Black once at startup
     SDL_SetRenderDrawColor(hackforge::renderer, 0, 0, 0, 255);
     SDL_RenderClear(hackforge::renderer);
+
+    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+    hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
 
     return SDL_APP_CONTINUE;
 }
@@ -90,6 +94,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     // NOTE: SDL_RenderClear() removed so your pen brush strokes persist on the canvas!
 
     // --- 1. Canvas Drawing Pass ---
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
     if (hackforge::penDown)
     {
         SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
@@ -105,7 +110,9 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     }
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---
+    SDL_SetRenderTarget(hackforge::renderer, nullptr);
     SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
+    SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
 
     // Clear the menu header zone so drawings don't bleed into your UI text/buttons
     SDL_FRect menuBarZone = { 0.0f, 0.0f, (float)hackforge::window_width, 55.0f };
