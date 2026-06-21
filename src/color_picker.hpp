@@ -1,7 +1,8 @@
-#ifndef WIN32_COLORPICKER_H
-#define WIN32_COLORPICKER_H
+#pragma once
 
 #include <SDL3/SDL.h>
+
+namespace hackforge {
 
 /**
  * @brief Opens the OS-native color picker dialog (Win32 on Windows, XDG Portal on Linux).
@@ -11,4 +12,4 @@
  */
 SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor);
 
-#endif // WIN32_COLORPICKER_H
+} // namespace hackforge
