@@ -1,4 +1,5 @@
-#include "win32_colorpicker.h" // This safely brings in <SDL3/SDL.h> first!
+// Author: Mackenzie Stewart
+#include "win32_colorpicker.h"
 #include <iostream>
 
 // ============================================================================
@@ -44,7 +45,6 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
     DBusError err;
     dbus_error_init(&err);
 
-    // Establish link with the local user session bus
     DBusConnection* conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
     if (dbus_error_is_set(&err)) {
         std::cerr << "[Portal] D-Bus connection failed: " << err.message << std::endl;
@@ -52,7 +52,6 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
         return currentColor;
     }
 
-    // Call out to the Desktop Portal Screenshot sub-service
     DBusMessage* msg = dbus_message_new_method_call(
         "org.freedesktop.portal.Desktop",      
         "/org/freedesktop/portal/desktop",     
@@ -65,16 +64,13 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
     DBusMessageIter iter;
     dbus_message_iter_init_append(msg, &iter);
 
-    // Empty string flags the portal to target global root screen real estate
     const char* parent_window = "";
     dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &parent_window);
 
-    // Append an empty dictionary matching required function signatures
     DBusMessageIter dict_iter;
     dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter);
     dbus_message_iter_close_container(&iter, &dict_iter);
 
-    // Synchronous blocking call waiting on the OS-level UI callback thread
     DBusMessage* reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
     dbus_message_unref(msg);
 
@@ -85,8 +81,6 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
     }
 
     SDL_Color selectedColor = currentColor;
-
-    // Unpack response array properties returning the 3-element float array coordinate space
     DBusMessageIter reply_iter;
     if (dbus_message_iter_init(reply, &reply_iter)) {
         DBusMessageIter results_dict;
@@ -115,7 +109,6 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
                 dbus_message_iter_next(&array_iter);
                 dbus_message_iter_get_basic(&array_iter, &b);
 
-                // Portals yield RGB floats mapped from 0.0 -> 1.0; translate back to 8-bit ints
                 selectedColor.r = static_cast<Uint8>(r * 255.0);
                 selectedColor.g = static_cast<Uint8>(g * 255.0);
                 selectedColor.b = static_cast<Uint8>(b * 255.0);
