@@ -19,6 +19,61 @@ contains the runtime DLL.
 Building on Linux
 -----------------
 
+# Hackforge Paint - Linux Dependency Guide
+
+This document outlines how to resolve and install the system libraries providing `<dbus/dbus.h>`. This header is required by the native Linux color picker implementation, which interfaces with the XDG Desktop Portal via D-Bus to invoke the native system color sampler.
+
+# Installing D-Bus Development Libraries
+
+The D-Bus development headers are not typically installed by default on desktop Linux distributions. You must install them using your distribution's package manager.
+
+### 🔹 Ubuntu / Debian / Linux Mint / Pop!_OS
+On Debian-based systems, the headers are provided by the `libdbus-1-dev` package:
+```bash
+sudo apt update
+sudo apt install build-essential libdbus-1-dev pkg-config
+
+Verifying the Installation
+
+Before compiling, you can verify that your compiler and pkg-config can locate the D-Bus library paths and compiler flags.
+
+Run the following command in your terminal:
+
+pkg-config --cflags --libs dbus-1
+
+Output Structure:
+
+-I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -ldbus-1
+
+(Note: The exact paths may vary slightly depending on whether your architecture is lib, lib64, or x86_64-linux-gnu).
+3. Compilation
+
+Once both SDL3 and D-Bus development packages are installed on your system, navigate to the source directory containing main.cpp, win32_colorpicker.cpp, and win32_colorpicker.h.
+
+Compile the executable using the following universal string:
+
+g++ main.cpp win32_colorpicker.cpp -o hackforge_paint `pkg-config --cflags --libs sdl3 dbus-1`
+
+Run the Application:
+
+./hackforge_paint
+
+4. Troubleshooting
+❌ Error: fatal error: dbus/dbus.h: No such file or directory
+
+    Cause: The compiler cannot find the D-Bus headers.
+
+    Fix: Ensure you installed the -dev or -devel version of the package matching your distribution (listed in Section 1), not just the runtime tool package.
+
+❌ Error: Package dbus-1 was not found in the pkg-config search path.
+
+    Cause: pkg-config cannot locate the library's .pc metadata file.
+
+    Fix: Explicitly ensure pkg-config (or pkgconfig on Fedora) is installed. If you installed headers to a custom directory, append that path to your environment variables:
+    Bash
+
+    export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+
 1. Install SDL3 from your package manager. Make sure to get the
    headers for building software.  On Debian-based distros this means
    installing the package `libsdl3-dev` instead of just `libsdl3`.
