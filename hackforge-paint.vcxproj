@@ -170,6 +170,10 @@
     <ClCompile Include="src/main.cpp" />
     <ClCompile Include="src\win32_colorpicker.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\LayoutConstants.h" />
+    <ClInclude Include="src\Toolbar.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
