@@ -1,0 +1,137 @@
+name: Build Ubuntu cmake
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ubuntu:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      SDL3_VERSION: release-3.4.10
+
+    steps:
+      - name: checkout project
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            git \
+            libx11-dev \
+            libxext-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libxtst-dev \
+            libxkbcommon-dev \
+            libdrm-dev \
+            libgbm-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev \
+            libasound2-dev \
+            libpulse-dev \
+            libudev-dev \
+            libibus-1.0-dev \
+            libdbus-1-dev
+            
+      - name: Checkout SDL3
+        uses: actions/checkout@v4
+        with:
+          repository: libsdl-org/SDL
+          path: third_party/SDL
+          ref: ${{ env.SDL3_VERSION }}
+
+      - name: Cache SDL3
+        id: cache-sdl3
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/SDL/install
+          key: sdl3-${{ matrix.os }}-${{ env.SDL3_VERSION }}
+
+      - name: Build and install SDL3 to the system path
+        run: |
+          cmake -S third_party/SDL -B third_party/SDL/build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DSDL_TEST_LIBRARY=OFF
+
+          cmake --build third_party/SDL/build
+          sudo cmake --install third_party/SDL/build
+          sudo ldconfig
+          
+      - name: Check SDL3 install
+        run: |
+          echo "Find SDL3 CMake config:"
+          sudo find /usr/local -name "SDL3Config.cmake" -o -name "sdl3-config.cmake"
+
+          echo "Find SDL3 libraries:"
+          sudo find /usr/local -name "libSDL3.so*"
+
+          echo "ldconfig cache:"
+          ldconfig -p | grep SDL3 || true
+          
+      - name: Configure cmake
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release
+            
+      - name: Build
+        run: cmake --build build
+      
+      - name: Prepare simple runtime
+        run: |
+          mkdir -p dist
+          
+          cp build/hackforge-paint dist/
+          chmod +x dist/hackforge-paint
+
+          SDL3_PATH=$(ldd build/hackforge-paint | grep "libSDL3" | awk '{print $3}')
+          echo "SDL3_PATH=$SDL3_PATH"
+          if [ -n "$SDL3_PATH" ] && [ -f "$SDL3_PATH" ];then
+            cp "$SDL3_PATH" dist/
+          fi
+
+          DBUS_PATH=$(ldd build/hackforge-paint | grep "libdbus-1" | awk '{print $3}')
+          echo "DBUS_PATH=$DBUS_PATH"
+          if [ -n "$DBUS_PATH" ] && [ -f "$DBUS_PATH" ];then
+            cp "$DBUS_PATH" dist/
+          fi
+
+          cat > dist/run.sh << 'EOF'
+           #!/usr/bin/env bash
+          set -e
+          cd "$(dirname "$0")"
+          export LD_LIBRARY_PATH="$PWD:$LD_LIBRARY_PATH"
+          ./hackforge-paint
+          EOF
+
+          chmod +x dist/run.sh
+      
+      - name: Check runtime dependencies
+        run: |
+          ldd dist/hackforge-paint
+          ! ldd dist/hackforge-paint | grep "not found"
+
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hackforge-paint-${{ matrix.os }}
+          path: |
+            dist/
+     
