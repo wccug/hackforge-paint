@@ -16,6 +16,39 @@ Building on Windows
 That's it. If you use the development package, the 'lib' folder also
 contains the runtime DLL.
 
+Building with MSBuild on Windows
+--------------------------------
+
+IMPORTANT: Exact directories might vary depending on your version of Windows and CPU architecture.
+
+Following these steps will install the "Build Tools for Visual Studio" version 18 (2026) and 16 (2019) which will allow for the project to be built without needing to have or run Visual Studio.
+
+1. Navigate to https://visualstudio.microsoft.com/downloads/ and scroll down to the second section named "Tools for Visual Studio".
+
+2. Expand that section and click the download button for "Build Tools for Visual Studio 2026".
+
+3. Once downloaded, run the executable. It will perform some initial setup before launching the installer.
+
+4. Under "Workloads", check "Desktop development with C++" and any other options that you want then click install.
+
+5. If you already have version 16 (2019) tools installed, GOTO step 8.
+
+6. The project is configured to work with version 16 (2019) so those tools will also need to be installed along side the tools for version 18 (2026).
+
+7. Download version 16 tools using: https://aka.ms/vs/16/release/vs_BuildTools.exe and then GOTO step 3.
+
+8. Once complete, add "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\MSBuild\Current\Bin" to your user's Path Environment Variable.
+
+Tip: If you want an easier way to modify your Environment Variables, download and install Microsoft PowerToys: https://github.com/microsoft/PowerToys
+
+9. Restart any open Powershell terminals.
+
+10. Make sure you have SDL3 downloaded and configured as defined in the "Building on Windows" section above.
+
+11. In the project's root directory (eg. "\Users\cppdev\git\hackforge-paint\"), run the following command: MSBuild.exe
+
+12. If everything goes smoothly, a directory called "x64" should have been created, which contains the executable. It can be ran in the terminal with .\x64\Debug\hackforge-paint.exe
+
 Building on Linux
 -----------------
 
