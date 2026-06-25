@@ -7,6 +7,7 @@
 #include "LayoutConstants.hpp"
 
 void OnToolbarNew();
+void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
 void OnToolbarSetUIColor();
@@ -243,6 +244,7 @@ public:
             TopLevelMenuItem file;
             file.SetLabel("File");
             file.AddChildMenuItem("New", x, OnToolbarNew);
+            file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
             file.AddChildMenuItem("Exit", x, OnToolbarExit);
             file.FinishLayout(x);
             float toolbarWidth = file.GetWidth();
