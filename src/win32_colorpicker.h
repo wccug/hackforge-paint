@@ -1,3 +1,4 @@
+// Author Mackenzie Stewart
 #ifndef WIN32_COLORPICKER_H
 #define WIN32_COLORPICKER_H
 

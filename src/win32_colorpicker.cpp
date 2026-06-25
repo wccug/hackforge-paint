@@ -1,7 +1,7 @@
+// Author: Mackenzie Stewart
 #include "win32_colorpicker.h"
 #include <iostream>
-// Author Mackenzie Stewart
-// Color Picker for Windows and Linux
+
 // ============================================================================
 // WINDOWS PLATFORM NATIVE CALL
 // ============================================================================
