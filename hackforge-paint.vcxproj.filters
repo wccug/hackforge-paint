@@ -23,10 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\LayoutConstants.h">
+    <ClInclude Include="src\LayoutConstants.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Toolbar.h">
+    <ClInclude Include="src\Toolbar.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

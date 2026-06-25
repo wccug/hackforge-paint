@@ -3,8 +3,8 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include "win32_colorpicker.h"
-#include "Toolbar.h"
-#include "LayoutConstants.h"
+#include "Toolbar.hpp"
+#include "LayoutConstants.hpp"
 
 namespace hackforge {
     static SDL_Window* window = nullptr;
