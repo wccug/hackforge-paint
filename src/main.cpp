@@ -4,15 +4,24 @@
 #include <string>
 #include "win32_colorpicker.h"
 #include "Toolbar.hpp"
+#include "AnglePen.hpp"
 #include "LayoutConstants.hpp"
+
+enum class Tool
+{
+    Stamp,
+    AnglePen
+};
 
 namespace hackforge {
     static SDL_Window* window = nullptr;
     static SDL_Renderer* renderer = nullptr;
     SDL_Texture* canvas = nullptr;
 
-    static float lastX = 0;
-    static float lastY = 0;
+    static float currentPenX = 0;
+    static float currentPenY = 0;
+    static float previousPenX = 0;
+    static float previousPenY = 0;
     static bool penDown = false;
     static bool shouldExit = false;
     static bool shouldClear = false;
@@ -22,6 +31,9 @@ namespace hackforge {
     static SDL_Color buttonColor = { 100, 100, 100, 255 }; // Default Button Background: Dark Gray
 
     Toolbar toolbar;
+    Tool currentTool;
+    AnglePen anglePen;
+
 } // namespace hackforge
 
 void NewDocument()
@@ -45,6 +57,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
 
+    hackforge::currentTool = Tool::Stamp;
+
     return SDL_APP_CONTINUE;
 }
 
@@ -55,8 +69,11 @@ void OnMouseMove(SDL_Event* event)
     if (!shouldContinueProcessingMouse)
         return;
 
-    hackforge::lastX = event->motion.x;
-    hackforge::lastY = event->motion.y;
+    hackforge::previousPenX = hackforge::currentPenX;
+    hackforge::previousPenY = hackforge::currentPenY;
+
+    hackforge::currentPenX = event->motion.x;
+    hackforge::currentPenY = event->motion.y;
 }
 
 void OnMouseLeftClick(SDL_Event* event)
@@ -138,15 +155,24 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     if (hackforge::penDown)
     {
         SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
-        SDL_FRect rect{};
-        rect.x = hackforge::lastX;
-        rect.y = hackforge::lastY;
-        rect.w = 10.0f;
-        rect.h = 10.0f;
 
-        // Use dynamic active pen color chosen from picker
-        SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
-        SDL_RenderFillRect(hackforge::renderer, &rect);
+        if (hackforge::currentTool == Tool::Stamp)
+        {
+            SDL_FRect rect{};
+            rect.x = hackforge::currentPenX;
+            rect.y = hackforge::currentPenY;
+            rect.w = 10.0f;
+            rect.h = 10.0f;
+
+            // Use dynamic active pen color chosen from picker
+            SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
+            SDL_RenderFillRect(hackforge::renderer, &rect);
+
+        }
+        else if (hackforge::currentTool == Tool::AnglePen)
+        {
+            hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
+        }
     }
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---
@@ -183,4 +209,18 @@ void OnToolbarSetPenColor()
 void OnToolbarSetUIColor()
 {
     hackforge::buttonColor = OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
+}
+
+void OnToolbarSetStampTool()
+{
+    hackforge::currentTool = Tool::Stamp;
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, true);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
+}
+
+void OnToolbarSetAnglePenTool()
+{
+    hackforge::currentTool = Tool::AnglePen;
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, true);
 }

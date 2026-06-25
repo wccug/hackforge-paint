@@ -10,6 +10,8 @@ void OnToolbarNew();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
 void OnToolbarSetUIColor();
+void OnToolbarSetStampTool();
+void OnToolbarSetAnglePenTool();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -26,7 +28,7 @@ class MenuItem
 {
 public:
 
-    MenuItem() : m_bounds{}
+    MenuItem() : m_bounds{}, m_checkedState(false)
     {
     }
 
@@ -53,6 +55,10 @@ public:
         {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         }
+        else if (m_checkedState)
+        {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        }
         else
         {
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -64,9 +70,15 @@ public:
             m_label.c_str());        
     }
 
+    void SetCheckedState(bool b)
+    {
+        m_checkedState = b;
+    }
+
 protected:
     SDL_FRect m_bounds;
     std::string m_label;
+    bool m_checkedState;
 
     bool IsInBounds(float x, float y)
     {
@@ -208,6 +220,10 @@ public:
         return m_bounds.w;
     }
 
+    size_t GetNumChildMenuItems() const { return m_childMenuItems.size(); }
+
+    void SetChildMenuItemCheckedState(size_t index, bool checkedState) { m_childMenuItems[index].SetCheckedState(checkedState); }
+
 private:
     std::vector<ChildMenuItem> m_childMenuItems;
 };
@@ -238,10 +254,23 @@ public:
         {
             TopLevelMenuItem tool;
             tool.SetLabel("Tool");
-            tool.AddChildMenuItem("Pen Color", x, OnToolbarSetPenColor);
+            tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
+            tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
             tool.FinishLayout(x);
             float toolbarWidth = tool.GetWidth();
             m_toolbarItems.push_back(tool);
+            m_toolbarItems[1].SetChildMenuItemCheckedState(0, true);
+
+            x += toolbarWidth;
+            x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+        }
+        {
+            TopLevelMenuItem color;
+            color.SetLabel("Color");
+            color.AddChildMenuItem("Pen Color", x, OnToolbarSetPenColor);
+            color.FinishLayout(x);
+            float toolbarWidth = color.GetWidth();
+            m_toolbarItems.push_back(color);
 
             x += toolbarWidth;
             x += hackforge::toolbar_top_level_menu_horizontal_spacing;
@@ -326,5 +355,10 @@ public:
         {
             m_toolbarItems[i].Render(renderer, uiLayoutState, uiColor);
         }
+    }
+
+    void SetChildMenuItemCheckedState(size_t toolbarIndex, size_t childMenuItemIndex, bool checkedState) 
+    { 
+        m_toolbarItems[toolbarIndex].SetChildMenuItemCheckedState(childMenuItemIndex, checkedState);
     }
 };
