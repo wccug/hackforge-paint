@@ -1,7 +1,10 @@
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
+#include <cstdio>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+#include <libportal/portal.h>
 #include <string>
+#include "hackforge.h"
 #include "win32_colorpicker.h"
 
 namespace hackforge {
@@ -36,6 +39,13 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     // Initialize the canvas target background color to Black once at startup
     SDL_SetRenderDrawColor(hackforge::renderer, 0, 0, 0, 255);
     SDL_RenderClear(hackforge::renderer);
+
+    GError* err = NULL;
+    xdp_portal = xdp_portal_initable_new(&err);
+
+    if (err != NULL) {
+        fprintf(stdout, "failed to build portal: %s\n", err->message);
+    }
 
     return SDL_APP_CONTINUE;
 }
