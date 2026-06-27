@@ -56,7 +56,13 @@ Building on Linux
    headers for building software.  On Debian-based distros this means
    installing the package `libsdl3-dev` instead of just `libsdl3`.
 
-2. Create a build directory under the root directory of the
+2. install linux dependencies:
+
+```
+   sudo apt install lib-dbus-1-dev pkg-config libportal-dev
+```
+
+3. Create a build directory under the root directory of the
    checked-out repository, and run cmake therein:
 
    > mkdir build && cd build && cmake ..
@@ -64,6 +70,6 @@ Building on Linux
    Notice the two dots above. This is a path parameter, which must be
    the top-level directory where the CMakeLists.txt file resides.
 
-3. Build the executable. With the above cmake invocation, it should
+4. Build the executable. With the above cmake invocation, it should
    suffice to just type `make` in your build directory. Alternatively,
    run `cmake --build . --target hackforge-paint`

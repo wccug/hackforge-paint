@@ -39,9 +39,29 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
 // ============================================================================
 #elif defined(__linux__)
 #include <dbus/dbus.h>
+#include <libportal/portal.h>
+#include "hackforge.h"
 #include <string>
 
+XdpPortal* xdp_portal = nullptr;
+
+void OnColorPicked(GObject* source_object, GAsyncResult* res, gpointer data) {
+    std::cout << "debug: color was picked" << std::endl;
+    GAsyncResult* result;
+    GError** error;
+    GVariant* color = xdp_portal_pick_color_finish(xdp_portal, result, error);
+}
+
 SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
+
+    std::cout << "debug: opening color picker" << std::endl;
+    xdp_portal_pick_color(xdp_portal, NULL, NULL, OnColorPicked, NULL);
+    return currentColor;
+}
+
+
+
+SDL_Color _OLD_OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
     DBusError err;
     dbus_error_init(&err);
 
@@ -56,7 +76,7 @@ SDL_Color OpenNativeColorPicker(SDL_Window* window, SDL_Color currentColor) {
         "org.freedesktop.portal.Desktop",      
         "/org/freedesktop/portal/desktop",     
         "org.freedesktop.portal.Screenshot",   
-        "SelectColor"                          
+        "PickColor"                          
     );
 
     if (!msg) return currentColor;
