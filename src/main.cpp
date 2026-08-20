@@ -1,13 +1,16 @@
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
+
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+
 #include <string>
-#include "win32_colorpicker.h"
+
+#include "colorpicker.hpp"
 #include "Toolbar.hpp"
 #include "AnglePen.hpp"
 #include "LayoutConstants.hpp"
-#include <Windows.h>
-#include <Shlobj.h>
+//#include <Windows.h>
+//#include <Shlobj.h>
 
 enum class Tool
 {
@@ -200,6 +203,7 @@ void OnToolbarNew()
 
 void OnToolbarSaveAs()
 {
+#if 0
     SDL_PropertiesID props = SDL_GetWindowProperties(hackforge::window);
     void* hWndData = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
     HWND hWnd = reinterpret_cast<HWND>(hWndData);
@@ -248,6 +252,7 @@ void OnToolbarSaveAs()
     SDL_CreateSurfaceFrom(hackforge::window_width, hackforge::window_height, hackforge::canvas->format, nullptr, 0);
     SDL_SavePNG(surface, destFilename.c_str());
     SDL_DestroySurface(surface);
+#endif
 }
 
 void OnToolbarExit()
@@ -257,12 +262,12 @@ void OnToolbarExit()
 
 void OnToolbarSetPenColor()
 {
-    hackforge::penColor = OpenNativeColorPicker(hackforge::window, hackforge::penColor);
+    hackforge::penColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
 }
 
 void OnToolbarSetUIColor()
 {
-    hackforge::buttonColor = OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
+    hackforge::buttonColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
 }
 
 void OnToolbarSetStampTool()
