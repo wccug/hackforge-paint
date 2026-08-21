@@ -6,40 +6,7 @@
 #include <string>
 
 #include "colorpicker.hpp"
-#include "Toolbar.hpp"
-#include "AnglePen.hpp"
-#include "LayoutConstants.hpp"
-//#include <Windows.h>
-//#include <Shlobj.h>
-
-enum class Tool
-{
-    Stamp,
-    AnglePen
-};
-
-namespace hackforge {
-    static SDL_Window* window = nullptr;
-    static SDL_Renderer* renderer = nullptr;
-    SDL_Texture* canvas = nullptr;
-
-    static float currentPenX = 0;
-    static float currentPenY = 0;
-    static float previousPenX = 0;
-    static float previousPenY = 0;
-    static bool penDown = false;
-    static bool shouldExit = false;
-    static bool shouldClear = false;
-
-    // --- State variables for the Custom Tooling colors ---
-    static SDL_Color penColor = { 255, 255, 255, 255 };   // Default Pen: White
-    static SDL_Color buttonColor = { 100, 100, 100, 255 }; // Default Button Background: Dark Gray
-
-    Toolbar toolbar;
-    Tool currentTool;
-    AnglePen anglePen;
-
-} // namespace hackforge
+#include "common.hpp"
 
 void NewDocument()
 {
@@ -62,7 +29,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
 
-    hackforge::currentTool = Tool::Stamp;
+    hackforge::currentTool = hackforge::Tool::Stamp;
 
     return SDL_APP_CONTINUE;
 }
@@ -161,7 +128,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     {
         SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
 
-        if (hackforge::currentTool == Tool::Stamp)
+        if (hackforge::currentTool == hackforge::Tool::Stamp)
         {
             SDL_FRect rect{};
             rect.x = hackforge::currentPenX;
@@ -174,7 +141,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             SDL_RenderFillRect(hackforge::renderer, &rect);
 
         }
-        else if (hackforge::currentTool == Tool::AnglePen)
+        else if (hackforge::currentTool == hackforge::Tool::AnglePen)
         {
             hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
         }
@@ -194,92 +161,4 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
     // SDL3 automates window and renderer cleanup inside standard callback shutdown hooks
-}
-
-void OnToolbarNew()
-{
-    NewDocument();
-}
-
-void OnToolbarSaveAs()
-{
-#if 0
-    SDL_PropertiesID props = SDL_GetWindowProperties(hackforge::window);
-    void* hWndData = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-    HWND hWnd = reinterpret_cast<HWND>(hWndData);
-
-    char documentsPath[MAX_PATH];
-
-    if (FAILED((SHGetFolderPathA(NULL,
-        CSIDL_PERSONAL | CSIDL_FLAG_CREATE,
-        NULL,
-        0,
-        documentsPath))))
-    {
-        return;
-    }
-
-    OPENFILENAMEA ofn;
-    ZeroMemory(&ofn, sizeof(ofn));
-
-    char szFile[MAX_PATH];
-    strcpy_s(szFile, "image.png");
-
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hWnd;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "PNG File\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = documentsPath;
-    ofn.lpstrDefExt = "png";
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-
-    if (GetSaveFileNameA(&ofn) == 0)
-        return;
-
-    std::string destFilename = ofn.lpstrFile;
-
-    // In SDL, textures are GPU-side, surfaces are CPU-side.
-    // We have to copy the GPU-side texture to CPU to save to disk.
-    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
-    SDL_Rect rect{};
-    rect.w = hackforge::window_width;
-    rect.h = hackforge::window_height;
-    SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, &rect);
-    SDL_CreateSurfaceFrom(hackforge::window_width, hackforge::window_height, hackforge::canvas->format, nullptr, 0);
-    SDL_SavePNG(surface, destFilename.c_str());
-    SDL_DestroySurface(surface);
-#endif
-}
-
-void OnToolbarExit()
-{
-    hackforge::shouldExit = true;
-}
-
-void OnToolbarSetPenColor()
-{
-    hackforge::penColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
-}
-
-void OnToolbarSetUIColor()
-{
-    hackforge::buttonColor = hackforge::OpenNativeColorPicker(hackforge::window, hackforge::buttonColor);
-}
-
-void OnToolbarSetStampTool()
-{
-    hackforge::currentTool = Tool::Stamp;
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, true);
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
-}
-
-void OnToolbarSetAnglePenTool()
-{
-    hackforge::currentTool = Tool::AnglePen;
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, true);
 }

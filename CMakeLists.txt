@@ -14,7 +14,9 @@ project(hackforge-paint LANGUAGES CXX)
 set(BUILD_TARGET_LINUX "True")
 
 add_executable(hackforge-paint src/main.cpp
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker.cpp>)
+   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker.cpp>
+   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar.cpp>
+)
 
 # Find and link in the SDL3 library. For debian-based Linux
 # distributions, execute `sudo apt install libsdl3-dev` For windows
