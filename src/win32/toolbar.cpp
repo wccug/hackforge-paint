@@ -1,7 +1,8 @@
-#include "../Toolbar.hpp"
-
 #include <Windows.h>
 #include <Shlobj.h>
+
+#include "common.hpp"
+#include "colorpicker.hpp"
 
 namespace hackforge {
 
