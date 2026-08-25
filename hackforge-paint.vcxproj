@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
+    <ClCompile Include="src\Bucket.cpp" />
     <ClCompile Include="src\win32_colorpicker.cpp" />
   </ItemGroup>
   <ItemGroup>

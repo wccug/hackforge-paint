@@ -13,6 +13,7 @@ void OnToolbarSetPenColor();
 void OnToolbarSetUIColor();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
+void OnToolbarSetPaintBucketTool();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -258,6 +259,7 @@ public:
             tool.SetLabel("Tool");
             tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
             tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
+            tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
             tool.FinishLayout(x);
             float toolbarWidth = tool.GetWidth();
             m_toolbarItems.push_back(tool);

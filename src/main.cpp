@@ -5,6 +5,7 @@
 #include "win32_colorpicker.h"
 #include "Toolbar.hpp"
 #include "AnglePen.hpp"
+#include "Bucket.hpp"
 #include "LayoutConstants.hpp"
 #include <Windows.h>
 #include <Shlobj.h>
@@ -12,7 +13,8 @@
 enum class Tool
 {
     Stamp,
-    AnglePen
+    AnglePen,
+    PaintBucket
 };
 
 namespace hackforge {
@@ -175,6 +177,11 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         {
             hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
         }
+        else if (hackforge::currentTool == Tool::PaintBucket)
+        {
+            RenderBucket(hackforge::renderer, hackforge::window_width, hackforge::window_height, hackforge::canvas, hackforge::penColor, hackforge::currentPenX, hackforge::currentPenY);
+            hackforge::penDown = false;
+        }
     }
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---
@@ -270,6 +277,7 @@ void OnToolbarSetStampTool()
     hackforge::currentTool = Tool::Stamp;
     hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, true);
     hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, false);
 }
 
 void OnToolbarSetAnglePenTool()
@@ -277,4 +285,14 @@ void OnToolbarSetAnglePenTool()
     hackforge::currentTool = Tool::AnglePen;
     hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
     hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, true);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, false);
+}
+
+void OnToolbarSetPaintBucketTool()
+{
+    hackforge::currentTool = Tool::PaintBucket;
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
+    hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, true);
+
 }
