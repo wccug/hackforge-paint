@@ -1,6 +1,6 @@
-#include "Bucket.hpp"
+#include "bucket.hpp"
 #include <stack>
-#include <assert.h>
+#include <cassert>
 
 // Intended for operations where real-time performance isn't needed, to be used
 // sparingly, since it copies the target to a CPU-visible resource and uploads
@@ -15,31 +15,29 @@ class CPUEffect
     int m_lockedHeight;
 
 public:
-    void Initialize(SDL_Renderer* renderer, int w, int h, SDL_Texture* c)
-    {
-        m_renderer = renderer;
-        m_lockedWidth = w;
-        m_lockedHeight = h;
-        m_canvas = c;
-    }
+    CPUEffect(SDL_Renderer* renderer, int w, int h, SDL_Texture* c)
+        : m_renderer(renderer)
+        , m_lockedWidth(w)
+        , m_lockedHeight(h)
+        , m_canvas(c)
+    {}
 
     void BeginCpuWrite()
     {
-        SDL_Rect lockRect{};
-        lockRect.w = m_lockedWidth;
-        lockRect.h = m_lockedHeight;
+        SDL_Rect lockRect{ .w = m_lockedWidth, .h = m_lockedHeight };
         m_intermediateCpu = SDL_RenderReadPixels(m_renderer, &lockRect);
-
         m_pixelData = reinterpret_cast<unsigned int*>(m_intermediateCpu->pixels);
     }
 
     unsigned int ReadLockedPixel(int x, int y)
     {
+        assert(x >= 0 && y >= 0 && x < m_lockedWidth && y < m_lockedHeight);
         return m_pixelData[y * m_lockedWidth + x];
     }
 
     void WriteLockedPixel(int x, int y, unsigned int value)
     {
+        assert(x >= 0 && y >= 0 && x < m_lockedWidth && y < m_lockedHeight);
         m_pixelData[y * m_lockedWidth + x] = value;
     }
 
@@ -151,13 +149,12 @@ void RenderBucket(SDL_Renderer* renderer, int window_width, int window_height, S
         return; // Only X8R8G8B8 is expected.
     }
 
-    CPUEffect cpuEffect;
-    cpuEffect.Initialize(renderer, window_width, window_height, canvas);
+    CPUEffect cpuEffect(renderer, window_width, window_height, canvas);
 
     cpuEffect.BeginCpuWrite();
 
     unsigned int fillColor = SDLColorToX8R8G8B8(penColor);
-    FloodFill(&cpuEffect, fillColor, (int)x, (int)y);
+    FloodFill(&cpuEffect, fillColor, static_cast<int>(x), static_cast<int>(y));
 
     cpuEffect.EndCpuWrite();
 }
