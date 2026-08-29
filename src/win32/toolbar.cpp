@@ -1,3 +1,5 @@
+#include "../common.hpp"
+
 #include <Windows.h>
 #include <Shlobj.h>
 
