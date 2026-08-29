@@ -11,8 +11,7 @@ namespace hackforge {
 enum class Tool
 {
     Stamp,
-    AnglePen,
-    PaintBucket
+    AnglePen
 };
 
 void OnToolbarNew();
@@ -242,15 +241,67 @@ public:
       float toolbarWidth = file.GetWidth();
       m_toolbarItems.push_back(file);
 
+<<<<<<< HEAD
+        float x = 0;
+        {
+            TopLevelMenuItem file;
+            file.SetLabel("File");
+            file.AddChildMenuItem("New", x, OnToolbarNew);
+            file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
+            file.AddChildMenuItem("Exit", x, OnToolbarExit);
+            file.FinishLayout(x);
+            float toolbarWidth = file.GetWidth();
+            m_toolbarItems.push_back(file);
+
+            x += toolbarWidth;
+            x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+        }
+        {
+            TopLevelMenuItem tool;
+            tool.SetLabel("Tool");
+            tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
+            tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
+            tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
+            tool.FinishLayout(x);
+            float toolbarWidth = tool.GetWidth();
+            m_toolbarItems.push_back(tool);
+            m_toolbarItems[1].SetChildMenuItemCheckedState(0, true);
+
+            x += toolbarWidth;
+            x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+        }
+        {
+            TopLevelMenuItem color;
+            color.SetLabel("Color");
+            color.AddChildMenuItem("Pen Color", x, OnToolbarSetPenColor);
+            color.FinishLayout(x);
+            float toolbarWidth = color.GetWidth();
+            m_toolbarItems.push_back(color);
+
+            x += toolbarWidth;
+            x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+        }
+        {
+            TopLevelMenuItem view;
+            view.SetLabel("View");
+            view.AddChildMenuItem("UI Color", x, OnToolbarSetUIColor);
+            view.FinishLayout(x);
+            float toolbarWidth = view.GetWidth();
+            m_toolbarItems.push_back(view);
+
+            x += toolbarWidth;
+            x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+        }
+=======
       x += toolbarWidth;
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+>>>>>>> main
     }
     {
       TopLevelMenuItem tool;
       tool.SetLabel("Tool");
       tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
-            tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);
