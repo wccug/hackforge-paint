@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
-#include "Bucket.hpp"
+#include "bucket.hpp"
 
 #include <string>
 
