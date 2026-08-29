@@ -1,4 +1,6 @@
 #include "../common.hpp"
+#include "../toolbar.hpp"
+#include "../colorpicker.hpp"
 
 #include <Windows.h>
 #include <Shlobj.h>
