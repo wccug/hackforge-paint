@@ -169,8 +169,8 @@
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
     <ClCompile Include="src\toolbar.cpp" />
-    <ClCompile Include="src\win32\colorpicker.cpp" />
-    <ClCompile Include="src\win32\toolbar.cpp" />
+    <ClCompile Include="src\win32\colorpicker_win32.cpp" />
+    <ClCompile Include="src\win32\toolbar_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AnglePen.hpp" />
