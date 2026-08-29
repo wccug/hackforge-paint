@@ -38,6 +38,109 @@ namespace hackforge {
     Tool currentTool;
     AnglePen anglePen;
 
+
+    class Marker
+    {
+        std::vector<int> m_indices;
+        std::vector<SDL_Vertex> m_vertices;
+
+        struct PressedState
+        {
+            float X1;
+            float Y1;
+            bool Valid;
+        } m_pressedState;
+
+        static SDL_FColor OpaqueUnormColorToOpaqueFloatColor(SDL_Color c)
+        {
+            SDL_FColor r;
+            r.a = 1.0f;
+            r.r = static_cast<float>(c.r) / 255.0f;
+            r.g = static_cast<float>(c.g) / 255.0f;
+            r.b = static_cast<float>(c.b) / 255.0f;
+            return r;
+        }
+
+    public:
+
+        void EnsureVerticesAndIndices()
+        {
+            if (m_indices.size() > 0)
+                return;
+
+            m_indices.push_back(0);
+            m_indices.push_back(1);
+            m_indices.push_back(2);
+            m_indices.push_back(2);
+            m_indices.push_back(1);
+            m_indices.push_back(3);
+
+            for (int i = 0; i < 4; ++i)
+            {
+                SDL_Vertex v{};
+                v.color.a = 1.0f;
+                v.color.r = 1.0f;
+                m_vertices.push_back(v);
+            }
+        }
+
+        void Render(SDL_Renderer* renderer, float x, float y, SDL_Color const& penColor, bool penDown)
+        {
+            EnsureVerticesAndIndices();
+
+            if (penDown)
+            {
+                if (!m_pressedState.Valid)
+                {
+                    m_pressedState.X1 = x;
+                    m_pressedState.Y1 = y;
+                    m_vertices[2].position.x = x;
+                    m_vertices[2].position.y = y;
+                    m_vertices[3].position.x = x;
+                    m_vertices[3].position.y = y;
+                    m_pressedState.Valid = true;
+                    return;
+                }
+            }
+            else
+            {
+                m_pressedState.Valid = false;
+                return;
+            }
+
+            float dx = x - m_pressedState.X1;
+            float dy = y - m_pressedState.Y1;
+            float length = sqrtf(dx * dx + dy * dy);
+
+            m_pressedState.X1 = x;
+            m_pressedState.Y1 = y;
+
+            if (length == 0.0f) return;
+
+            // Calculate perpendicular vector for thickness offset
+            float thickness = 40.0f;
+
+            float nx = -dy / length * (thickness / 2.0f);
+            float ny = dx / length * (thickness / 2.0f);
+
+            SDL_Vertex previousLeft = m_vertices[2];
+            SDL_Vertex previousRight = m_vertices[3];
+
+            m_vertices[0] = previousLeft;
+            m_vertices[1] = previousRight;
+
+            m_vertices[2].position.x = x + nx;
+            m_vertices[2].position.y = y + ny;
+
+            m_vertices[3].position.x = x - nx;
+            m_vertices[3].position.y = y - ny;
+
+            SDL_RenderGeometry(renderer, nullptr, m_vertices.data(), m_vertices.size(), m_indices.data(), m_indices.size());
+
+        }
+    };
+    Marker marker;
+
 } // namespace hackforge
 
 void NewDocument()
@@ -142,6 +245,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
     return SDL_APP_CONTINUE;
 }
 
+
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
@@ -156,29 +260,28 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 1. Canvas Drawing Pass ---
     SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
-    if (hackforge::penDown)
+
+    if (hackforge::currentTool == Tool::Stamp)
     {
+        // Use dynamic active pen color chosen from picker
         SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
+        SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
+        hackforge::marker.Render(hackforge::renderer, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor, hackforge::penDown);
 
-        if (hackforge::currentTool == Tool::Stamp)
+    }
+    else if (hackforge::currentTool == Tool::AnglePen)
+    {
+        if (hackforge::penDown)
         {
-            SDL_FRect rect{};
-            rect.x = hackforge::currentPenX;
-            rect.y = hackforge::currentPenY;
-            rect.w = 10.0f;
-            rect.h = 10.0f;
-
-            // Use dynamic active pen color chosen from picker
-            SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
-            SDL_RenderFillRect(hackforge::renderer, &rect);
-
-        }
-        else if (hackforge::currentTool == Tool::AnglePen)
-        {
+            SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
             hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
         }
-        else if (hackforge::currentTool == Tool::PaintBucket)
+    }
+    else if (hackforge::currentTool == Tool::PaintBucket)
+    {
+        if (hackforge::penDown)
         {
+            SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
             RenderBucket(hackforge::renderer, hackforge::window_width, hackforge::window_height, hackforge::canvas, hackforge::penColor, hackforge::currentPenX, hackforge::currentPenY);
             hackforge::penDown = false;
         }
