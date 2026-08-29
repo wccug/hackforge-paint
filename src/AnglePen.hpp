@@ -63,6 +63,12 @@ public:
             vertices.push_back(v);
         }
 
-        SDL_RenderGeometry(renderer, nullptr, vertices.data(), vertices.size(), m_indices.data(), m_indices.size());
+        SDL_RenderGeometry(
+            renderer, 
+            nullptr, 
+            vertices.data(), 
+            static_cast<int>(vertices.size()), 
+            m_indices.data(), 
+            static_cast<int>(m_indices.size()));
     }
 };

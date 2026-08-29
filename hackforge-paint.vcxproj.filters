@@ -18,7 +18,10 @@
     <ClCompile Include="src/main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32_colorpicker.cpp">
+    <ClCompile Include="src\win32\colorpicker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32\toolbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\bucket.cpp">
@@ -30,6 +33,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Toolbar.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\colorpicker.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AnglePen.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
