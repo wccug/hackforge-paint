@@ -16,8 +16,8 @@ set(BUILD_TARGET_LINUX "True")
 add_executable(hackforge-paint
    src/main.cpp
    src/toolbar.cpp
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker.cpp>
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar.cpp>
+   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker_linux.cpp>
+   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar_linux.cpp>
 )
 
 # Find and link in the SDL3 library. For debian-based Linux
