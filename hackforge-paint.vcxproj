@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
+    <ClCompile Include="src\toolbar.cpp" />
     <ClCompile Include="src\win32\colorpicker.cpp" />
     <ClCompile Include="src\win32\toolbar.cpp" />
   </ItemGroup>

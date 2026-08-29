@@ -1,14 +1,7 @@
 #include <Windows.h>
 #include <Shlobj.h>
 
-#include "common.hpp"
-#include "colorpicker.hpp"
-
 namespace hackforge {
-
-void OnToolbarNew() {
-  NewDocument();
-}
 
 void OnToolbarSaveAs() {
   SDL_PropertiesID props = SDL_GetWindowProperties(hackforge::window);
@@ -57,32 +50,6 @@ void OnToolbarSaveAs() {
                         hackforge::canvas->format, nullptr, 0);
   SDL_SavePNG(surface, destFilename.c_str());
   SDL_DestroySurface(surface);
-}
-
-void OnToolbarExit() {
-  hackforge::shouldExit = true;
-}
-
-void OnToolbarSetPenColor() {
-  hackforge::penColor =
-      hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
-}
-
-void OnToolbarSetUIColor() {
-  hackforge::buttonColor = hackforge::OpenNativeColorPicker(
-      hackforge::window, hackforge::buttonColor);
-}
-
-void OnToolbarSetStampTool() {
-  hackforge::currentTool = Tool::Stamp;
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, true);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
-}
-
-void OnToolbarSetAnglePenTool() {
-  hackforge::currentTool = Tool::AnglePen;
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, true);
 }
 
 } // namespace hackforge

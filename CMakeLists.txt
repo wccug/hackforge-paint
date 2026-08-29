@@ -13,7 +13,9 @@ project(hackforge-paint LANGUAGES CXX)
 # TODO: Change this once cmake can do windows as well.
 set(BUILD_TARGET_LINUX "True")
 
-add_executable(hackforge-paint src/main.cpp
+add_executable(hackforge-paint
+   src/main.cpp
+   src/toolbar.cpp
    $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker.cpp>
    $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar.cpp>
 )
