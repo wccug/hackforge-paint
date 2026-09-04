@@ -12,6 +12,10 @@ void OnToolbarExit() {
   hackforge::shouldExit = true;
 }
 
+void OnToolbarSave() {
+  hackforge::doSave = true;
+}
+
 void OnToolbarSetPenColor() {
   hackforge::penColor =
       hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
