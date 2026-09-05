@@ -1,0 +1,27 @@
+name: Fedora Build & Package Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  fedora-build:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          dnf install -y cmake gcc-c++ make git SDL3-devel
+
+      - name: Configure and Build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make -j$(nproc)
