@@ -26,7 +26,7 @@ add_executable(hackforge-paint
 # builds, see the accompanying MSBuild file and instructions.
 
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
-target_link_libraries(hackforge-paint SDL3::SDL3)
+target_link_libraries(hackforge-paint SDL3::SDL3 SDL3_image )
 
 # The Linux native color picker talks to the XDG desktop portal over
 # D-Bus, so link libdbus-1 on Linux. Install `libdbus-1-dev` if

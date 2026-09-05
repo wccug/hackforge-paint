@@ -2,8 +2,11 @@
 
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3_image/SDL_image.h>
 #include "bucket.hpp"
 
+#include <chrono>
 #include <string>
 
 #include "colorpicker.hpp"
@@ -121,6 +124,19 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     {
         ClearImpl();
         hackforge::shouldClear = false;
+    }
+
+    if (hackforge::doSave) {
+        
+        // make up a filename
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+        const auto filename = "hackforge-paint-file-" + std::to_string(ms) + ".png";
+        
+        SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, nullptr);
+        IMG_SavePNG(surface,filename.c_str());
+        SDL_DestroySurface(surface);
+        hackforge::doSave = false;
     }
 
     // --- 1. Canvas Drawing Pass ---

@@ -16,6 +16,7 @@ enum class Tool
 };
 
 void OnToolbarNew();
+void OnToolbarSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
@@ -236,6 +237,7 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
+      file.AddChildMenuItem("Timestamp Save", x, OnToolbarSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);
       file.FinishLayout(x);
