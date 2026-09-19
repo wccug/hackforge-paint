@@ -28,34 +28,22 @@ void OnToolbarSetUIColor() {
 
 void OnToolbarSetPencilTool() {
     hackforge::currentTool = Tool::Pencil;
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, true);
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, false);
-    hackforge::toolbar.SetChildMenuItemCheckedState(1, 3, false);
+    hackforge::toolbar.CheckItemAndUncheckOthers(1, 0);
 }
 
 void OnToolbarSetStampTool() {
   hackforge::currentTool = Tool::Stamp;
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, true);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 3, false);
+  hackforge::toolbar.CheckItemAndUncheckOthers(1, 1);
 }
 
 void OnToolbarSetAnglePenTool() {
   hackforge::currentTool = Tool::AnglePen;
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, true);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 3, false);
+  hackforge::toolbar.CheckItemAndUncheckOthers(1, 2);
 }
 
 void OnToolbarSetPaintBucketTool() {
   hackforge::currentTool = hackforge::Tool::PaintBucket;
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 0, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 1, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 2, false);
-  hackforge::toolbar.SetChildMenuItemCheckedState(1, 3, true);
+  hackforge::toolbar.CheckItemAndUncheckOthers(1, 3);
 }
 
 } // namespace hackforge
