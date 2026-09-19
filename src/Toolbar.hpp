@@ -10,6 +10,7 @@ namespace hackforge {
 
 enum class Tool
 {
+    Pencil,
     Stamp,
     AnglePen,
     PaintBucket
@@ -21,6 +22,7 @@ void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
 void OnToolbarSetUIColor();
+void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
@@ -250,6 +252,7 @@ public:
     {
       TopLevelMenuItem tool;
       tool.SetLabel("Tool");
+      tool.AddChildMenuItem("Pencil", x, OnToolbarSetPencilTool);
       tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
             tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);

@@ -33,7 +33,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
 
-    hackforge::currentTool = hackforge::Tool::Stamp;
+    hackforge::currentTool = hackforge::Tool::Pencil;
 
     return SDL_APP_CONTINUE;
 }
@@ -145,7 +145,13 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     {
         SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
 
-        if (hackforge::currentTool == hackforge::Tool::Stamp)
+
+        if (hackforge::currentTool == hackforge::Tool::Pencil)
+        {
+            SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
+            SDL_RenderLine(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY);
+        }
+        else if (hackforge::currentTool == hackforge::Tool::Stamp)
         {
             SDL_FRect rect{};
             rect.x = hackforge::currentPenX;
