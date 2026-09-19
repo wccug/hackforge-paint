@@ -1,21 +1,6 @@
 Build Instructions
 ==================
 
-Building on Windows
--------------------
-
-1. Go to an SDL release from e.g.,
-   https://github.com/libsdl-org/SDL/releases
-
-2. Choose the development package, e.g., SDL3-devel-3.4.4-VC.zip
-
-3. Unzip the file.
-
-4. Copy the contents to SDK3-SDK/, so that folder directly contains the subfolders "include" and "lib".
-
-That's it. If you use the development package, the 'lib' folder also
-contains the runtime DLL.
-
 Building with MSBuild on Windows
 --------------------------------
 
@@ -43,9 +28,15 @@ Tip: If you want an easier way to modify your Environment Variables, download an
 
 9. Restart any open Powershell terminals.
 
-10. Make sure you have SDL3 downloaded and configured as defined in the "Building on Windows" section above.
+10. Make sure you have SDL3 downloaded:
+- Go to an SDL release and SDL3_image release from e.g.,
+   https://github.com/libsdl-org/SDL/releases
+   https://github.com/libsdl-org/SDL_image/releases
+- Choose development packages, e.g., SDL3-devel-3.4.4-VC.zip and SDL3_image-devel-3.4.6-VC.zip
+- Unzip the files.
+- Copy the contents to SDK3-SDK/SDL3, so the SDL3 folder directly contains the subfolders "include" and "lib", and the SDL3-SDK/SDL3_image folder contains SDL_image.h. Copy the SDL3_image libs over as well.
 
-11. In the project's root directory (eg. "\Users\cppdev\git\hackforge-paint\"), run the following command: MSBuild.exe
+11. In the project's root directory (eg. "\Users\cppdev\git\hackforge-paint\"), run the following command: MSBuild.exe. Or you can open Visual Studio 2019 and build the .sln.
 
 12. If everything goes smoothly, a directory called "x64" should have been created, which contains the executable. It can be ran in the terminal with .\x64\Debug\hackforge-paint.exe
 
