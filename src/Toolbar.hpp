@@ -269,8 +269,8 @@ public:
     {
         TopLevelMenuItem effect;
         effect.SetLabel("Effect");
-        effect.AddChildMenuItem("Horizontal flip", x, OnToolbarHorizontalFlip);
-        effect.AddChildMenuItem("Vertical flip", x, OnToolbarVerticalFlip);
+        effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
+        effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
         effect.FinishLayout(x);
         float toolbarWidth = effect.GetWidth();
         m_toolbarItems.push_back(effect);
