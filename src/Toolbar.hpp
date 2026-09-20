@@ -280,12 +280,12 @@ public:
     }
     {
       TopLevelMenuItem color;
-      color.SetLabel("Color");
+      color.SetLabel("Colour");
       color.AddChildMenuItem(
 #ifdef __linux__
-        "Randomize Pen Color",
+        "Randomize Pen Colour",
 #else
-        "Pen Color",
+        "Pen Colour",
 #endif
         x, OnToolbarSetPenColor);
       color.FinishLayout(x);
@@ -298,7 +298,7 @@ public:
     {
       TopLevelMenuItem view;
       view.SetLabel("View");
-      view.AddChildMenuItem("UI Color", x, OnToolbarSetUIColor);
+      view.AddChildMenuItem("UI Colour", x, OnToolbarSetUIColor);
       view.FinishLayout(x);
       float toolbarWidth = view.GetWidth();
       m_toolbarItems.push_back(view);
