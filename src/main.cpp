@@ -114,6 +114,33 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
     return SDL_APP_CONTINUE;
 }
 
+void DrawCopyOfCanvasWithFlipMode(SDL_Renderer* renderer, SDL_Texture* canvas, SDL_FlipMode flipMode)
+{
+    SDL_PropertiesID props = SDL_GetTextureProperties(canvas);
+    SDL_PixelFormat format = (SDL_PixelFormat)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_FORMAT_NUMBER, SDL_PIXELFORMAT_UNKNOWN);
+
+    // Create a new target texture
+    SDL_Texture* scratch = SDL_CreateTexture(renderer, format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+
+    // Set properties and copy contents
+    SDL_SetRenderTarget(renderer, scratch);
+    SDL_RenderTexture(renderer, canvas, NULL, NULL); // Render the original texture onto the new texture
+
+    // Set target to canvas, and draw the copy flipped
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+    SDL_RenderTextureRotated(
+        hackforge::renderer,
+        scratch,
+        NULL,        // Source rectangle (NULL for entire texture)
+        NULL,        // Destination rectangle on screen
+        0.0,         // Rotation angle
+        NULL,        // Center of rotation (NULL defaults to center)
+        flipMode
+    );
+
+    SDL_DestroyTexture(scratch);
+}
+
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
@@ -137,6 +164,18 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         IMG_SavePNG(surface,filename.c_str());
         SDL_DestroySurface(surface);
         hackforge::doSave = false;
+    }
+
+    if (hackforge::doHorizontalFlip)
+    {
+        DrawCopyOfCanvasWithFlipMode(hackforge::renderer, hackforge::canvas, SDL_FLIP_HORIZONTAL);
+        hackforge::doHorizontalFlip = false;
+    }
+
+    if (hackforge::doVerticalFlip)
+    {
+        DrawCopyOfCanvasWithFlipMode(hackforge::renderer, hackforge::canvas, SDL_FLIP_VERTICAL);
+        hackforge::doVerticalFlip = false;
     }
 
     // --- 1. Canvas Drawing Pass ---

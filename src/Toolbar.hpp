@@ -26,6 +26,8 @@ void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
+void OnToolbarHorizontalFlip();
+void OnToolbarVerticalFlip();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -263,6 +265,18 @@ public:
 
       x += toolbarWidth;
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+    }
+    {
+        TopLevelMenuItem effect;
+        effect.SetLabel("Effect");
+        effect.AddChildMenuItem("Horizontal flip", x, OnToolbarHorizontalFlip);
+        effect.AddChildMenuItem("Vertical flip", x, OnToolbarVerticalFlip);
+        effect.FinishLayout(x);
+        float toolbarWidth = effect.GetWidth();
+        m_toolbarItems.push_back(effect);
+
+        x += toolbarWidth;
+        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
       TopLevelMenuItem color;
