@@ -16,6 +16,14 @@ void OnToolbarSave() {
   hackforge::doSave = true;
 }
 
+void OnToolbarHorizontalFlip() {
+    hackforge::doHorizontalFlip = true;
+}
+
+void OnToolbarVerticalFlip() {
+    hackforge::doVerticalFlip = true;
+}
+
 void OnToolbarSetPenColor() {
   hackforge::penColor =
       hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);

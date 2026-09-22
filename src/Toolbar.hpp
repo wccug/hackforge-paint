@@ -26,6 +26,8 @@ void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
+void OnToolbarHorizontalFlip();
+void OnToolbarVerticalFlip();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -265,13 +267,25 @@ public:
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
+        TopLevelMenuItem effect;
+        effect.SetLabel("Effect");
+        effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
+        effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
+        effect.FinishLayout(x);
+        float toolbarWidth = effect.GetWidth();
+        m_toolbarItems.push_back(effect);
+
+        x += toolbarWidth;
+        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+    }
+    {
       TopLevelMenuItem color;
-      color.SetLabel("Color");
+      color.SetLabel("Colour");
       color.AddChildMenuItem(
 #ifdef __linux__
-        "Randomize Pen Color",
+        "Randomize Pen Colour",
 #else
-        "Pen Color",
+        "Pen Colour",
 #endif
         x, OnToolbarSetPenColor);
       color.FinishLayout(x);
@@ -284,7 +298,7 @@ public:
     {
       TopLevelMenuItem view;
       view.SetLabel("View");
-      view.AddChildMenuItem("UI Color", x, OnToolbarSetUIColor);
+      view.AddChildMenuItem("UI Colour", x, OnToolbarSetUIColor);
       view.FinishLayout(x);
       float toolbarWidth = view.GetWidth();
       m_toolbarItems.push_back(view);
