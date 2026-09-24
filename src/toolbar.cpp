@@ -17,7 +17,9 @@ void OnToolbarSave() {
 }
 void OnToolbarResize()
 {
-
+    hackforge::showResizeDialog = true;
+    hackforge::resizeDialog.Initialize(800, 600, "Resize");
+    resizeDialog.Layout();
 }
 
 void OnToolbarHorizontalFlip() {

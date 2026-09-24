@@ -3,6 +3,7 @@
 #include "Toolbar.hpp"
 #include "AnglePen.hpp"
 #include "LayoutConstants.hpp"
+#include "dialogbox.hpp"
 
 namespace hackforge {
 
@@ -21,6 +22,7 @@ inline bool shouldClear = false;
 inline bool doSave = false;
 inline bool doHorizontalFlip = false;
 inline bool doVerticalFlip = false;
+inline bool showResizeDialog = false;
 
 // --- State variables for the Custom Tooling colors ---
 inline SDL_Color penColor = {255, 255, 255, 255}; // Default Pen: White
@@ -30,6 +32,7 @@ inline SDL_Color buttonColor = {100, 100, 100,
 inline Toolbar toolbar;
 inline Tool currentTool;
 inline AnglePen anglePen;
+inline ResizeDialogBox resizeDialog;
 
 inline void NewDocument()
 {

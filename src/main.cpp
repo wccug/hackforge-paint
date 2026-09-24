@@ -58,6 +58,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 void OnMouseMove(SDL_Event* event)
 {
+    if (hackforge::showResizeDialog)
+    {
+        hackforge::resizeDialog.OnMouseMove(event->motion.x, event->motion.y);
+        return;
+    }
+
     bool shouldContinueProcessingMouse = true;
     hackforge::toolbar.OnMouseMove(event->motion.x, event->motion.y, &shouldContinueProcessingMouse);
     if (!shouldContinueProcessingMouse)
@@ -72,6 +78,17 @@ void OnMouseMove(SDL_Event* event)
 
 void OnMouseLeftClick(SDL_Event* event)
 {
+    if (hackforge::showResizeDialog)
+    {
+        bool closeDialog = false;
+        hackforge::resizeDialog.OnMouseClick(event->button.x, event->button.y, &closeDialog);
+        if (closeDialog)
+        {
+            hackforge::showResizeDialog = false;
+        }
+        return;
+    }
+
     bool shouldContinueProcessingClicks = true;
     hackforge::toolbar.OnMouseClick(&shouldContinueProcessingClicks);
     if (!shouldContinueProcessingClicks)
@@ -238,10 +255,11 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
     hackforge::toolbar.Render(hackforge::renderer, hackforge::buttonColor);
 
-    SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
-
-    ResizeDialogBox dialog(800, 600, "Resize");
-    dialog.ShowDialog(hackforge::renderer, hackforge::buttonColor);
+    if (hackforge::showResizeDialog)
+    {
+        SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
+        hackforge::resizeDialog.ShowDialog(hackforge::renderer, hackforge::buttonColor);
+    }
 
     SDL_RenderPresent(hackforge::renderer);
     return SDL_APP_CONTINUE;

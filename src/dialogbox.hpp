@@ -5,9 +5,10 @@ class ResizeDialogBox
     class Button
     {
     public:
-        SDL_FRect m_buttonRect;
-        std::string m_buttonText;
-        float m_buttonTextX;
+        bool m_highlight{};
+        SDL_FRect m_buttonRect{};
+        std::string m_buttonText{};
+        float m_buttonTextX{};
 
         void Layout(float* pLayoutX, float* pLayoutY, std::string const& text, float margin)
         {
@@ -29,7 +30,14 @@ class ResizeDialogBox
         {
             {
                 SDL_SetRenderScale(renderer, 1, 1);
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                if (m_highlight)
+                {
+                    SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
+                }
+                else
+                {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                }
                 SDL_RenderFillRect(renderer, &m_buttonRect);
             }
             {
@@ -38,12 +46,35 @@ class ResizeDialogBox
                 const float textScale = hackforge::toolbar_text_scaling;
                 SDL_SetRenderScale(renderer, textScale, textScale);
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                if (m_highlight)
+                {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                }
+                else
+                {
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                }
                 SDL_RenderDebugText(
                     renderer,
                     textX / hackforge::toolbar_text_scaling,
                     textY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
                     m_buttonText.c_str());
             }
+        }
+
+        bool IsInBounds(float x, float y) {
+            if (x > m_buttonRect.x && x < m_buttonRect.x + m_buttonRect.w && y > m_buttonRect.y &&
+                y < m_buttonRect.y + m_buttonRect.h) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        void SetHighlight(bool b)
+        {
+            m_highlight = b;
         }
     };
 
@@ -126,7 +157,11 @@ class ResizeDialogBox
 
 public:
 
-    ResizeDialogBox(int w, int h, const char* label) : m_dialogTitle(label){}
+    void Initialize(int w, int h, const char* label)
+    {
+        m_dialogTitle = label;
+        m_cancelButton.m_highlight = false;
+    };
 
     void Layout()
     {
@@ -196,8 +231,6 @@ public:
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
     {
-        Layout();
-
         DrawBlankWindow(renderer, uiColor);
         m_widthTextBox.Draw(renderer, uiColor);
         m_heightTextBox.Draw(renderer, uiColor);
@@ -207,12 +240,15 @@ public:
 
     void OnMouseMove(float x, float y)
     {
-
+        m_cancelButton.SetHighlight(m_cancelButton.IsInBounds(x, y));
     }
 
-    void OnMouseClick(float x, float y)
+    void OnMouseClick(float x, float y, bool* pCloseDialog)
     {
-
+        if (m_cancelButton.m_highlight)
+        {
+            *pCloseDialog = true;
+        }
     }
 
     int GetWidth() { return 0; }
