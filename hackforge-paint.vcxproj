@@ -177,6 +177,7 @@
     <ClInclude Include="src\AnglePen.hpp" />
     <ClInclude Include="src\colorpicker.hpp" />
     <ClInclude Include="src\common.hpp" />
+    <ClInclude Include="src\dialogbox.hpp" />
     <ClInclude Include="src\LayoutConstants.hpp" />
     <ClInclude Include="src\Toolbar.hpp" />
   </ItemGroup>

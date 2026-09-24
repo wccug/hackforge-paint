@@ -9,6 +9,7 @@ namespace hackforge {
 inline SDL_Window *window = nullptr;
 inline SDL_Renderer *renderer = nullptr;
 inline SDL_Texture *canvas = nullptr;
+inline SDL_Texture *screenDoor = nullptr;
 
 inline float currentPenX = 0;
 inline float currentPenY = 0;

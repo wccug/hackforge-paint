@@ -11,10 +11,27 @@
 
 #include "colorpicker.hpp"
 #include "common.hpp"
+#include "dialogbox.hpp"
 
 void NewDocument()
 {
     hackforge::shouldClear = true;
+}
+
+void AllocateScreenDoorTexture(SDL_Renderer* renderer) 
+{
+    // Create a tiny 2x2 texture with Alpha support
+    hackforge::screenDoor = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 2, 2);
+
+    // Enable alpha blending so the screen underneath shows through
+    SDL_SetTextureBlendMode(hackforge::screenDoor, SDL_BLENDMODE_BLEND);
+
+    const SDL_PixelFormatDetails* details = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32);
+    Uint32 clear = SDL_MapRGBA(details, NULL, 0, 0, 0, 0x00);
+    Uint32 translucent = SDL_MapRGBA(details, NULL, 0, 0, 0, 0xCC);
+
+    Uint32 pixels[4] = { clear, translucent, translucent, translucent };
+    SDL_UpdateTexture(hackforge::screenDoor, NULL, pixels, 2 * sizeof(Uint32));
 }
 
 /* This function runs once at startup. */
@@ -32,6 +49,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
+    AllocateScreenDoorTexture(hackforge::renderer);
 
     hackforge::currentTool = hackforge::Tool::Pencil;
 
@@ -219,6 +237,11 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
     SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
     hackforge::toolbar.Render(hackforge::renderer, hackforge::buttonColor);
+
+    SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
+
+    ResizeDialogBox dialog(800, 600, "Resize");
+    dialog.ShowDialog(hackforge::renderer, hackforge::buttonColor);
 
     SDL_RenderPresent(hackforge::renderer);
     return SDL_APP_CONTINUE;

@@ -28,6 +28,7 @@ void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
+void OnToolbarResize();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -241,8 +242,9 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
-      file.AddChildMenuItem("Timestamp Save", x, OnToolbarSave);
+      file.AddChildMenuItem("Quick Save", x, OnToolbarSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
+      file.AddChildMenuItem("Resize", x, OnToolbarResize);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);
       file.FinishLayout(x);
       float toolbarWidth = file.GetWidth();

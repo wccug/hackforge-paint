@@ -15,6 +15,10 @@ void OnToolbarExit() {
 void OnToolbarSave() {
   hackforge::doSave = true;
 }
+void OnToolbarResize()
+{
+
+}
 
 void OnToolbarHorizontalFlip() {
     hackforge::doHorizontalFlip = true;
