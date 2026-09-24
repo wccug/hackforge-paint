@@ -76,6 +76,14 @@ void OnMouseMove(SDL_Event* event)
     hackforge::currentPenY = event->motion.y;
 }
 
+void OnKeyboardInput(SDL_Event* event)
+{
+    if (hackforge::showResizeDialog)
+    {
+        hackforge::resizeDialog.OnKeyboardInput(event->key.key);
+    }
+}
+
 void OnMouseLeftClick(SDL_Event* event)
 {
     if (hackforge::showResizeDialog)
@@ -145,6 +153,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
         if (event->button.button == SDL_BUTTON_LEFT) {
             hackforge::penDown = false;
         }
+    }
+    else if (event->type == SDL_EVENT_KEY_UP)
+    {
+        OnKeyboardInput(event);
     }
     return SDL_APP_CONTINUE;
 }

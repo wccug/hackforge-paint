@@ -170,6 +170,7 @@
     <ClCompile Include="src/main.cpp" />
     <ClCompile Include="src\bucket.cpp" />
     <ClCompile Include="src\toolbar.cpp" />
+    <ClCompile Include="src\uilayout.cpp" />
     <ClCompile Include="src\win32\colorpicker_win32.cpp" />
     <ClCompile Include="src\win32\toolbar_win32.cpp" />
   </ItemGroup>
@@ -178,7 +179,7 @@
     <ClInclude Include="src\colorpicker.hpp" />
     <ClInclude Include="src\common.hpp" />
     <ClInclude Include="src\dialogbox.hpp" />
-    <ClInclude Include="src\LayoutConstants.hpp" />
+    <ClInclude Include="src\uilayout.hpp" />
     <ClInclude Include="src\Toolbar.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

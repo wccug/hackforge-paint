@@ -2,7 +2,7 @@
 
 #include "Toolbar.hpp"
 #include "AnglePen.hpp"
-#include "LayoutConstants.hpp"
+#include "uilayout.hpp"
 #include "dialogbox.hpp"
 
 namespace hackforge {

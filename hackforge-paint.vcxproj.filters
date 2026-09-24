@@ -30,9 +30,12 @@
     <ClCompile Include="src\win32\toolbar_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\uilayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\LayoutConstants.hpp">
+    <ClInclude Include="src\uilayout.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Toolbar.hpp">

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "LayoutConstants.hpp"
+#include "uilayout.hpp"
 
 namespace hackforge {
 
@@ -97,12 +97,7 @@ protected:
   bool m_checkedState;
 
   bool IsInBounds(float x, float y) {
-    if (x > m_bounds.x && x < m_bounds.x + m_bounds.w && y > m_bounds.y &&
-        y < m_bounds.y + m_bounds.h) {
-      return true;
-    } else {
-      return false;
-    }
+      return hackforge::IsInBounds(x, y, m_bounds);
   }
 };
 
