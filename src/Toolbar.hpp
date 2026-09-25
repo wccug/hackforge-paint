@@ -28,7 +28,7 @@ void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
-void OnToolbarResize();
+void OnToolbarSetCanvasSize();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -196,13 +196,10 @@ public:
     m_bounds.x = x;
     m_bounds.y = 0;
     m_bounds.h = hackforge::toolbar_height;
-    float labelWidth = m_label.length() * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE *
-                       hackforge::toolbar_text_scaling;
+    float labelWidth = hackforge::GetRenderedTextWidthInPixels(m_label.length());
     m_bounds.w = labelWidth;
 
-    m_expandedBoxWidth = m_longestLabelLength *
-                         SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE *
-                         hackforge::toolbar_text_scaling;
+    m_expandedBoxWidth = hackforge::GetRenderedTextWidthInPixels(m_longestLabelLength);
     for (size_t i = 0; i < m_childMenuItems.size(); ++i) {
       m_childMenuItems[i].SetWidth(m_expandedBoxWidth);
     }
@@ -239,7 +236,7 @@ public:
       file.AddChildMenuItem("New", x, OnToolbarNew);
       file.AddChildMenuItem("Quick Save", x, OnToolbarSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
-      file.AddChildMenuItem("Set Canvas Size", x, OnToolbarResize);
+      file.AddChildMenuItem("Set Canvas Size", x, OnToolbarSetCanvasSize);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);
       file.FinishLayout(x);
       float toolbarWidth = file.GetWidth();

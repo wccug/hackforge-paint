@@ -34,7 +34,8 @@ inline SDL_Color buttonColor = {100, 100, 100,
 inline Toolbar toolbar;
 inline Tool currentTool;
 inline AnglePen anglePen;
-inline std::unique_ptr<SetCanvasSizeDialogBox> resizeDialog;
+inline std::unique_ptr<SetCanvasSizeDialogBox> setCanvasSizeDialog;
+inline std::unique_ptr<InfoDialogBox> infoDialog;
 
 inline void NewDocument()
 {

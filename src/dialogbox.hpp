@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sstream>
+
 enum class DialogResult
 {
     None,
@@ -21,7 +23,7 @@ public:
         m_buttonRect.x = *pLayoutX;
         m_buttonRect.y = *pLayoutY;
 
-        float textWidth = text.length() * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * hackforge::toolbar_text_scaling;
+        float textWidth = hackforge::GetRenderedTextWidthInPixels(text.length());
         float requiredWidth = textWidth + margin + margin;
 
         m_buttonRect.w = requiredWidth;
@@ -148,7 +150,7 @@ public:
         // Draw the text that goes in the box.
         // Position it to be right-justified
         {
-            float textWidth = m_text.length() * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * hackforge::toolbar_text_scaling;
+            float textWidth = hackforge::GetRenderedTextWidthInPixels(m_text.length());
             float textX = m_textBoxRect.x + m_textBoxRect.w - textWidth;
             float textY = m_textBoxRect.y;
             const float textScale = hackforge::toolbar_text_scaling;
@@ -220,25 +222,168 @@ public:
     bool IsFocused() const { return m_focused; }
 };
 
-class SetCanvasSizeDialogBox
+class DialogBoxCommon
 {
+public:
     std::string m_dialogTitle;
     float m_menubarTextX;
+    SDL_FRect m_dialogRect;
+
+    DialogBoxCommon(const char* label)
+    {
+        m_dialogTitle = label;
+    }
+
+protected:
+
+    void LayoutCommon(float dialogRectWidth)
+    {
+        // Center the menubar text
+        float menubarTextWidth = hackforge::GetRenderedTextWidthInPixels(m_dialogTitle.length());
+        m_menubarTextX = m_dialogRect.x + (dialogRectWidth / 2) - (menubarTextWidth / 2);
+    }
+
+    void DrawBlankWindow(SDL_Renderer* renderer, SDL_Color uiColor)
+    {
+        // Draw a solid rect for the background
+        {
+            SDL_SetRenderScale(renderer, 1, 1);
+
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &m_dialogRect);
+
+            SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
+            SDL_RenderRect(renderer, &m_dialogRect);
+        }
+
+        // Draw a filled rect for the top "menubar" of the dialog
+        {
+            SDL_FRect rect{};
+            rect.x = m_dialogRect.x;
+            rect.y = m_dialogRect.y;
+            rect.w = m_dialogRect.w;
+            rect.h = hackforge::toolbar_height;
+            SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+
+        // Draw the menubar label
+        {
+            float textX = m_menubarTextX;
+            float textY = m_dialogRect.y;
+            const float textScale = hackforge::toolbar_text_scaling;
+            SDL_SetRenderScale(renderer, textScale, textScale);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderDebugText(
+                renderer,
+                textX / hackforge::toolbar_text_scaling,
+                textY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
+                m_dialogTitle.c_str());
+        }
+    }
+};
+
+// A simple dialog box with an 'OK' button
+class InfoDialogBox : public DialogBoxCommon
+{
+    std::vector<std::string> m_text;
+    float m_textX;
+    float m_textY;
+
+    Button m_okButton;
+public:
+
+    InfoDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, const char* infoText)
+        : DialogBoxCommon(dialogTitle)
+    {
+        Layout(parentWindowWidth, parentWindowHeight);
+
+        // Split the string up based on newlines
+        std::istringstream stream(infoText);
+        std::string line;
+        while (std::getline(stream, line)) {
+            m_text.push_back(line);
+        }
+    }
+
+    void OnMouseMove(float x, float y)
+    {
+        m_okButton.OnMouseMove(x, y);
+    }
+
+
+    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    {
+        if (m_okButton.IsHighlighted())
+        {
+            *pCloseDialog = true;
+        }
+    }
+
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    {
+        DrawBlankWindow(renderer, uiColor);
+
+        SDL_SetRenderScale(renderer, hackforge::toolbar_text_scaling, hackforge::toolbar_text_scaling);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+        float layoutY = m_textY;
+        for (size_t i = 0; i < m_text.size(); ++i)
+        {
+            SDL_RenderDebugText(
+                renderer,
+                m_textX / hackforge::toolbar_text_scaling,
+                layoutY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
+                m_text[i].c_str());
+
+            layoutY += hackforge::toolbar_height;
+        }
+
+        m_okButton.Draw(renderer, uiColor);
+    }
+
+private:
+    void Layout(int parentWindowWidth, int parentWindowHeight)
+    {
+        // Size chosen based on the baked-in choice of elements on the dialog
+        int dialogWidth = 500;
+        int dialogHeight = 260;
+
+        // Center the dialog
+        m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));
+        m_dialogRect.y = static_cast<float>((parentWindowHeight / 2) - (dialogHeight / 2));
+
+        m_dialogRect.w = static_cast<float>(dialogWidth);
+        m_dialogRect.h = static_cast<float>(dialogHeight);
+
+        m_textX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+        m_textY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
+
+        // Position the OK button
+        float okButtonWidth = hackforge::GetRenderedTextWidthInPixels(2) + hackforge::sc_dialogbox_margin + hackforge::sc_dialogbox_margin;
+        float okButtonX = m_dialogRect.x + (m_dialogRect.w / 2) - (okButtonWidth / 2);
+        float okButtonY = m_dialogRect.y + m_dialogRect.h - hackforge::toolbar_height - hackforge::toolbar_height;
+        m_okButton.Layout(&okButtonX, &okButtonY, "OK", hackforge::sc_dialogbox_margin);
+
+        LayoutCommon(m_dialogRect.w);
+    }
+};
+
+class SetCanvasSizeDialogBox : public DialogBoxCommon
+{
     LabelledTextBox m_widthTextBox;
     LabelledTextBox m_heightTextBox;
     Button m_okButton;
     Button m_cancelButton;
-    SDL_FRect m_dialogRect;
     DialogResult m_dialogResult;
 
 public:
 
-    SetCanvasSizeDialogBox(const char* label, int widthTextFieldContents, int heightTextFieldContents)
+    SetCanvasSizeDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, int widthTextFieldContents, int heightTextFieldContents) : DialogBoxCommon(label)
     {
-        m_dialogTitle = label;
         m_dialogResult = DialogResult::None;
-
-        Layout(widthTextFieldContents, heightTextFieldContents);
+        Layout(parentWindowWidth, parentWindowHeight, widthTextFieldContents, heightTextFieldContents);
     }
 
     void OnMouseMove(float x, float y)
@@ -313,69 +458,34 @@ public:
     }
 
 private:
-    void Layout(int width, int height)
+    void Layout(int parentWindowWidth, int parentWindowHeight, int canvasWidthValue, int canvasHeightValue)
     {
-        // Lay out the overall size of the dialog box.
-        m_dialogRect.x = 240;
-        m_dialogRect.y = 100;
-        m_dialogRect.w = 300;
-        m_dialogRect.h = 260;
+        // Size chosen based on the baked-in choice of elements on the dialog
+        int dialogWidth = 300;
+        int dialogHeight = 260; 
+
+        // Center the dialog
+        m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));
+        m_dialogRect.y = static_cast<float>((parentWindowHeight / 2) - (dialogHeight / 2));
+
+        m_dialogRect.w = static_cast<float>(dialogWidth);
+        m_dialogRect.h = static_cast<float>(dialogHeight);
 
         // Center the menubar text
-        float menubarTextWidth = m_dialogTitle.length() * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * hackforge::toolbar_text_scaling;
-        m_menubarTextX = m_dialogRect.x + (m_dialogRect.w / 2) - (menubarTextWidth / 2);
+        LayoutCommon(m_dialogRect.w);
 
         float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
 
-        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", width);
+        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", canvasWidthValue);
         layoutY += hackforge::sc_dialogbox_margin;
 
-        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", height);
+        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", canvasHeightValue);
         layoutY += hackforge::sc_dialogbox_margin;
         layoutY += hackforge::sc_dialogbox_margin;
 
         m_okButton.Layout(&layoutX, &layoutY, "OK", hackforge::sc_dialogbox_margin);
         layoutX += hackforge::sc_dialogbox_tabStop;
         m_cancelButton.Layout(&layoutX, &layoutY, "Cancel", hackforge::sc_dialogbox_margin);
-    }
-
-    void DrawBlankWindow(SDL_Renderer* renderer, SDL_Color uiColor)
-    {
-        // Draw a solid rect for the background
-        {
-            SDL_SetRenderScale(renderer, 1, 1);
-
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderFillRect(renderer, &m_dialogRect);
-
-            SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
-            SDL_RenderRect(renderer, &m_dialogRect);
-        }
-
-        // Draw a filled rect for the top "menubar" of the dialog
-        {
-            SDL_FRect rect{};
-            rect.x = m_dialogRect.x;
-            rect.y = m_dialogRect.y;
-            rect.w = m_dialogRect.w;
-            rect.h = hackforge::toolbar_height;
-            SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
-            SDL_RenderFillRect(renderer, &rect);
-        }
-
-        // Draw the menubar label
-        {
-            float textX = m_menubarTextX;
-            float textY = m_dialogRect.y;
-            const float textScale = hackforge::toolbar_text_scaling;
-            SDL_SetRenderScale(renderer, textScale, textScale);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderDebugText(
-                renderer,
-                textX / hackforge::toolbar_text_scaling,
-                textY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
-                m_dialogTitle.c_str());
-        }
     }
 };

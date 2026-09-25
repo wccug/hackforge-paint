@@ -15,9 +15,14 @@ void OnToolbarExit() {
 void OnToolbarSave() {
   hackforge::doSave = true;
 }
-void OnToolbarResize()
+void OnToolbarSetCanvasSize()
 {
-    hackforge::resizeDialog.reset(new SetCanvasSizeDialogBox("Set Canvas Size", hackforge::window_width, hackforge::window_height));
+    hackforge::setCanvasSizeDialog.reset(new SetCanvasSizeDialogBox(
+        "Set Canvas Size",
+        hackforge::window_width,
+        hackforge::window_height,
+        hackforge::window_width, 
+        hackforge::window_height));
 }
 
 void OnToolbarHorizontalFlip() {
@@ -58,14 +63,15 @@ void OnToolbarSetPaintBucketTool() {
   hackforge::toolbar.CheckItemAndUncheckOthers(1, 3);
 }
 
+// Draw the toolbar
 void hackforge::Toolbar::Render(SDL_Renderer* renderer, SDL_Color uiColor) {
     // Render a filled rectangle at the top
     {
         SDL_FRect rect{};
         rect.x = 0;
         rect.y = 0;
-        rect.w = hackforge::window_width;
-        rect.h = hackforge::toolbar_height;
+        rect.w = static_cast<float>(hackforge::window_width);
+        rect.h = static_cast<float>(hackforge::toolbar_height);
         SDL_SetRenderScale(renderer, 1, 1);
         SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
         SDL_RenderFillRect(renderer, &rect);

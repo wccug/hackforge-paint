@@ -11,4 +11,9 @@ namespace hackforge
             return false;
         }
     }
+
+    float GetRenderedTextWidthInPixels(size_t stringLength)
+    {
+        return stringLength * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE* hackforge::toolbar_text_scaling;
+    }
 }

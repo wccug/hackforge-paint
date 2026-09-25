@@ -19,5 +19,6 @@ namespace hackforge {
     static constexpr int sc_minimum_canvas_height = 400;
 
     bool IsInBounds(float x, float y, SDL_FRect const& bounds);
+    float GetRenderedTextWidthInPixels(size_t stringLength);
 
 } // namespace hackforge
