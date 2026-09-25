@@ -239,7 +239,7 @@ public:
       file.AddChildMenuItem("New", x, OnToolbarNew);
       file.AddChildMenuItem("Quick Save", x, OnToolbarSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
-      file.AddChildMenuItem("Resize", x, OnToolbarResize);
+      file.AddChildMenuItem("Set Canvas Size", x, OnToolbarResize);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);
       file.FinishLayout(x);
       float toolbarWidth = file.GetWidth();
@@ -347,24 +347,7 @@ public:
     }
   }
 
-  void Render(SDL_Renderer *renderer, SDL_Color uiColor) {
-    // Render a filled rectangle at the top
-    {
-      SDL_FRect rect{};
-      rect.x = 0;
-      rect.y = 0;
-      rect.w = hackforge::window_width;
-      rect.h = hackforge::toolbar_height;
-      SDL_SetRenderScale(renderer, 1, 1);
-      SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
-      SDL_RenderFillRect(renderer, &rect);
-    }
-
-    // Draw the toolbar UI for child items
-    for (size_t i = 0; i < m_toolbarItems.size(); ++i) {
-      m_toolbarItems[i].Render(renderer, uiLayoutState, uiColor);
-    }
-  }
+  void Render(SDL_Renderer* renderer, SDL_Color uiColor);
 
   void SetChildMenuItemCheckedState(size_t toolbarIndex,
                                     size_t childMenuItemIndex,

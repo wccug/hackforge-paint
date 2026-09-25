@@ -34,8 +34,8 @@ void AllocateScreenDoorTexture(SDL_Renderer* renderer)
     SDL_UpdateTexture(hackforge::screenDoor, NULL, pixels, 2 * sizeof(Uint32));
 }
 
-/* This function runs once at startup. */
-SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
+
+SDL_AppResult CreateSizeDependentResources()
 {
     /* Create the window and renderer */
     if (!SDL_CreateWindowAndRenderer("Paint", hackforge::window_width, hackforge::window_height,
@@ -44,12 +44,22 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
         return SDL_APP_FAILURE;
     }
 
+    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+    hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+    AllocateScreenDoorTexture(hackforge::renderer);
+
+    return SDL_APP_CONTINUE;
+}
+
+/* This function runs once at startup. */
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
+{
     // Initialize the canvas target background color to Black once at startup
     NewDocument();
 
-    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
-    hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, 800, 600);
-    AllocateScreenDoorTexture(hackforge::renderer);
+    SDL_AppResult createResult = CreateSizeDependentResources();
+    if (createResult != SDL_APP_CONTINUE)
+        return createResult;
 
     hackforge::currentTool = hackforge::Tool::Pencil;
 
@@ -58,9 +68,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 void OnMouseMove(SDL_Event* event)
 {
-    if (hackforge::showResizeDialog)
+    if (hackforge::resizeDialog)
     {
-        hackforge::resizeDialog.OnMouseMove(event->motion.x, event->motion.y);
+        hackforge::resizeDialog->OnMouseMove(event->motion.x, event->motion.y);
         return;
     }
 
@@ -78,21 +88,53 @@ void OnMouseMove(SDL_Event* event)
 
 void OnKeyboardInput(SDL_Event* event)
 {
-    if (hackforge::showResizeDialog)
+    if (hackforge::resizeDialog)
     {
-        hackforge::resizeDialog.OnKeyboardInput(event->key.key);
+        hackforge::resizeDialog->OnKeyboardInput(event->key.key);
     }
 }
 
 void OnMouseLeftClick(SDL_Event* event)
 {
-    if (hackforge::showResizeDialog)
+    if (hackforge::resizeDialog)
     {
         bool closeDialog = false;
-        hackforge::resizeDialog.OnMouseClick(event->button.x, event->button.y, &closeDialog);
+        hackforge::resizeDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
         if (closeDialog)
         {
-            hackforge::showResizeDialog = false;
+            DialogResult result = hackforge::resizeDialog->GetDialogResult();
+            int newWidth = hackforge::resizeDialog->GetCanvasWidth();
+            int newHeight = hackforge::resizeDialog->GetCanvasHeight();
+            hackforge::resizeDialog.reset();
+
+            if (result == DialogResult::Cancel)
+            {
+                return;
+            }
+
+            if (newWidth == hackforge::window_width && newHeight == hackforge::window_height)
+            {
+                return;
+            }
+
+            SDL_SetWindowSize(hackforge::window, newWidth, newHeight);
+
+            SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+            SDL_Texture* newCanvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, newWidth, newHeight);
+
+            SDL_SetRenderTarget(hackforge::renderer, newCanvas);
+            {
+                SDL_FRect dstRect{};
+                dstRect.w = static_cast<float>(hackforge::window_width);
+                dstRect.h = static_cast<float>(hackforge::window_height);
+
+                SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, &dstRect);
+            }
+            SDL_DestroyTexture(hackforge::canvas);
+            hackforge::canvas = newCanvas;
+
+            hackforge::window_width = newWidth;
+            hackforge::window_height = newHeight;
         }
         return;
     }
@@ -267,10 +309,13 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
     hackforge::toolbar.Render(hackforge::renderer, hackforge::buttonColor);
 
-    if (hackforge::showResizeDialog)
+    if (hackforge::resizeDialog)
     {
+        // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
-        hackforge::resizeDialog.ShowDialog(hackforge::renderer, hackforge::buttonColor);
+
+        // Show the modal dialog overtop
+        hackforge::resizeDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     SDL_RenderPresent(hackforge::renderer);
