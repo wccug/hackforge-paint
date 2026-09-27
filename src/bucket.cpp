@@ -79,6 +79,10 @@ static void FloodFill(CPUEffect* pCpu, unsigned int fillColor, int xPos, int yPo
 {
     unsigned int referenceColor = pCpu->ReadLockedPixel(xPos, yPos);
 
+    if (referenceColor == fillColor) {
+        return;
+    }
+
     struct StackItem
     {
         int X, Y;
