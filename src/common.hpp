@@ -1,15 +1,20 @@
 #include <SDL3/SDL.h>
+#include <memory>
 
 #include "Toolbar.hpp"
 #include "AnglePen.hpp"
-#include "LayoutConstants.hpp"
+#include "uilayout.hpp"
+#include "dialogbox.hpp"
 
 namespace hackforge {
 
 inline SDL_Window *window = nullptr;
 inline SDL_Renderer *renderer = nullptr;
 inline SDL_Texture *canvas = nullptr;
+inline SDL_Texture *screenDoor = nullptr;
 
+inline int window_width = sc_default_canvas_width;
+inline int window_height = sc_default_canvas_height;
 inline float currentPenX = 0;
 inline float currentPenY = 0;
 inline float previousPenX = 0;
@@ -29,6 +34,8 @@ inline SDL_Color buttonColor = {100, 100, 100,
 inline Toolbar toolbar;
 inline Tool currentTool;
 inline AnglePen anglePen;
+inline std::unique_ptr<SetCanvasSizeDialogBox> setCanvasSizeDialog;
+inline std::unique_ptr<InfoDialogBox> infoDialog;
 
 inline void NewDocument()
 {
