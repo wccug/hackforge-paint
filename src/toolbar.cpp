@@ -12,8 +12,8 @@ void OnToolbarExit() {
   hackforge::shouldExit = true;
 }
 
-void OnToolbarSave() {
-  hackforge::doSave = true;
+void OnToolbarQuickSave() {
+  hackforge::doQuickSave = true;
 }
 void OnToolbarSetCanvasSize()
 {

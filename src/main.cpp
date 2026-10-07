@@ -419,17 +419,28 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         hackforge::shouldClear = false;
     }
 
-    if (hackforge::doSave) {
+    if (hackforge::doQuickSave) {
         
         // make up a filename
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
         const auto filename = "hackforge-paint-file-" + std::to_string(ms) + ".png";
-        
+
+        SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
         SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, nullptr);
         IMG_SavePNG(surface,filename.c_str());
         SDL_DestroySurface(surface);
-        hackforge::doSave = false;
+        hackforge::doQuickSave = false;
+
+        std::stringstream messageBoxText;
+        messageBoxText << "File " << filename << " saved.";
+
+        hackforge::infoDialog.reset(new InfoDialogBox(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            messageBoxText.str().c_str(),
+            28));
     }
 
     if (hackforge::doHorizontalFlip)

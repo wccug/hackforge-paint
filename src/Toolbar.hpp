@@ -18,7 +18,7 @@ enum class Tool
 };
 
 void OnToolbarNew();
-void OnToolbarSave();
+void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
@@ -237,7 +237,7 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
-      file.AddChildMenuItem("Quick Save", x, OnToolbarSave);
+      file.AddChildMenuItem("Quick Save", x, OnToolbarQuickSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
       file.AddChildMenuItem("Set Canvas Size", x, OnToolbarSetCanvasSize);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);

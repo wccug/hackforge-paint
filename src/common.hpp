@@ -22,7 +22,7 @@ inline float previousPenY = 0;
 inline bool penDown = false;
 inline bool shouldExit = false;
 inline bool shouldClear = false;
-inline bool doSave = false;
+inline bool doQuickSave = false;
 inline bool doHorizontalFlip = false;
 inline bool doVerticalFlip = false;
 
