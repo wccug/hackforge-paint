@@ -15,7 +15,11 @@
 
 void NewDocument()
 {
-    hackforge::shouldClear = true;
+    hackforge::sizeInputDialog.reset(new SizeInputDialogBox(
+        "New Document",
+        hackforge::sc_default_canvas_width,
+        hackforge::sc_default_canvas_height,
+        SizeInputDialogBox::Mode::NewDocument));
 }
 
 void AllocateScreenDoorTexture(SDL_Renderer* renderer) 
@@ -46,7 +50,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     }
 
     // Initialize the canvas target background color to Black once at startup
-    NewDocument();
+    hackforge::shouldClear = true;
 
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
@@ -65,9 +69,9 @@ void OnMouseMove(SDL_Event* event)
         return;
     }
 
-    if (hackforge::setCanvasSizeDialog)
+    if (hackforge::sizeInputDialog)
     {
-        hackforge::setCanvasSizeDialog->OnMouseMove(event->motion.x, event->motion.y);
+        hackforge::sizeInputDialog->OnMouseMove(event->motion.x, event->motion.y);
         return;
     }
 
@@ -83,14 +87,14 @@ void OnMouseMove(SDL_Event* event)
     hackforge::currentPenY = event->motion.y;
 }
 
-class ResizeDialogValidation
+class SizeInputDialogValidation
 {
     std::stringstream m_errorMessage;
     bool m_validWidth = true;
     bool m_validHeight = true;
 
 public:
-    ResizeDialogValidation(int requestedWidth, int requestedHeight)
+    SizeInputDialogValidation(int requestedWidth, int requestedHeight)
     {
         if (requestedWidth < hackforge::sc_minimum_canvas_width)
         {
@@ -147,23 +151,13 @@ private:
     }
 };
 
-void OnCloseSetCanvasSizeDialog()
+void OnConfirmSetCanvasSizeDialog_NewDocument(int newWidth, int newHeight)
 {
-    DialogResult result = hackforge::setCanvasSizeDialog->GetDialogResult();
-    int newWidth = hackforge::setCanvasSizeDialog->GetRequestedCanvasWidth();
-    int newHeight = hackforge::setCanvasSizeDialog->GetRequestedCanvasHeight();
-
-    if (result == DialogResult::Cancel)
-    {
-        hackforge::setCanvasSizeDialog.reset();
-        return;
-    }
-
     // Validate the requested width and height are acceptable. Pop up a  dialog box if not.
-    ResizeDialogValidation rdv(newWidth, newHeight);
-    if (!rdv.IsValid())
+    SizeInputDialogValidation sidv(newWidth, newHeight);
+    if (!sidv.IsValid())
     {
-        std::string errorText = rdv.GetErrorText().str();
+        std::string errorText = sidv.GetErrorText().str();
         hackforge::infoDialog.reset(new InfoDialogBox(
             "Information",
             hackforge::window_width,
@@ -173,7 +167,49 @@ void OnCloseSetCanvasSizeDialog()
         return;
     }
 
-    hackforge::setCanvasSizeDialog.reset();
+    hackforge::sizeInputDialog.reset();
+
+    hackforge::window_width = newWidth;
+    hackforge::window_height = newHeight;
+
+    SDL_SetWindowSize(hackforge::window, hackforge::window_width, hackforge::window_height);
+    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+
+    SDL_DestroyTexture(hackforge::canvas);
+    hackforge::canvas = SDL_CreateTexture(
+        hackforge::renderer,
+        pixel_format,
+        SDL_TEXTUREACCESS_TARGET,
+        hackforge::window_width,
+        hackforge::window_height);
+
+    hackforge::shouldClear = true;
+}
+
+void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
+{
+    if (newWidth == hackforge::window_width && newHeight == hackforge::window_height)
+    {
+        // No change, nothing to do
+        hackforge::sizeInputDialog.reset();
+        return;
+    }
+
+    // Validate the requested width and height are acceptable. Pop up a  dialog box if not.
+    SizeInputDialogValidation sidv(newWidth, newHeight);
+    if (!sidv.IsValid())
+    {
+        std::string errorText = sidv.GetErrorText().str();
+        hackforge::infoDialog.reset(new InfoDialogBox(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
+    }
+
+    hackforge::sizeInputDialog.reset();
 
     SDL_SetWindowSize(hackforge::window, newWidth, newHeight);
 
@@ -205,6 +241,31 @@ void OnCloseSetCanvasSizeDialog()
     hackforge::window_height = newHeight;
 }
 
+
+
+void OnCloseSetCanvasSizeDialog()
+{
+    DialogResult result = hackforge::sizeInputDialog->GetDialogResult();
+    int newWidth = hackforge::sizeInputDialog->GetRequestedCanvasWidth();
+    int newHeight = hackforge::sizeInputDialog->GetRequestedCanvasHeight();
+    SizeInputDialogBox::Mode mode = hackforge::sizeInputDialog->GetMode();
+
+    if (result == DialogResult::Cancel)
+    {
+        hackforge::sizeInputDialog.reset();
+        return;
+    }
+
+    if (mode == SizeInputDialogBox::Mode::Resize)
+    {
+        OnConfirmSetCanvasSizeDialog_Resize(newWidth, newHeight);
+    }
+    else if (mode == SizeInputDialogBox::Mode::NewDocument)
+    {
+        OnConfirmSetCanvasSizeDialog_NewDocument(newWidth, newHeight);
+    }
+}
+
 void OnKeyboardInput(SDL_Event* event)
 {
     if (hackforge::infoDialog)
@@ -218,10 +279,10 @@ void OnKeyboardInput(SDL_Event* event)
         return;
     }
 
-    if (hackforge::setCanvasSizeDialog)
+    if (hackforge::sizeInputDialog)
     {
         bool closeDialog = false;
-        hackforge::setCanvasSizeDialog->OnKeyboardInput(event->key.key, &closeDialog);
+        hackforge::sizeInputDialog->OnKeyboardInput(event->key.key, &closeDialog);
         if (closeDialog)
         {
             OnCloseSetCanvasSizeDialog();
@@ -243,10 +304,10 @@ void OnMouseLeftClick(SDL_Event* event)
         }
         return;
     }
-    if (hackforge::setCanvasSizeDialog)
+    if (hackforge::sizeInputDialog)
     {
         bool closeDialog = false;
-        hackforge::setCanvasSizeDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
+        hackforge::sizeInputDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
 
         if (closeDialog)
         {
@@ -427,16 +488,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::setCanvasSizeDialog || hackforge::infoDialog;
+    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog;
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
     }
 
-    if (hackforge::setCanvasSizeDialog)
+    if (hackforge::sizeInputDialog)
     {
-        hackforge::setCanvasSizeDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
+        hackforge::sizeInputDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     // Info dialogs take priority over the resize dialog, so it gets drawn last.

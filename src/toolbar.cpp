@@ -17,12 +17,11 @@ void OnToolbarSave() {
 }
 void OnToolbarSetCanvasSize()
 {
-    hackforge::setCanvasSizeDialog.reset(new SetCanvasSizeDialogBox(
+    hackforge::sizeInputDialog.reset(new SizeInputDialogBox(
         "Set Canvas Size",
         hackforge::window_width,
         hackforge::window_height,
-        hackforge::window_width, 
-        hackforge::window_height));
+        SizeInputDialogBox::Mode::Resize));
 }
 
 void OnToolbarHorizontalFlip() {
@@ -69,7 +68,7 @@ void OnToolbarAbout()
         "Information",
         hackforge::window_width,
         hackforge::window_height,
-        "This is a simple paint app. Feel free to get in touch with WCCUG if you'd like to make contributions.",
+        "WCCUG Paint version 0.1\nFeel free to get in touch with WCCUG if you'd like to make contributions.",
         28));
 }
 

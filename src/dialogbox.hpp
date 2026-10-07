@@ -312,6 +312,16 @@ public:
         size_t startOfCurrentLine = 0;
         for (size_t i = 0; i < input.length(); ++i)
         {
+            if (input[i] == '\n')
+            {
+                size_t lineLength = i - startOfCurrentLine;
+                std::string line = input.substr(startOfCurrentLine, lineLength);
+                result.push_back(line);
+                lastSpaceIndex = -1;
+                startOfCurrentLine = i + 1;
+                continue;
+            }
+
             if (input[i] == ' ')
             {
                 lastSpaceIndex = static_cast<int>(i);
@@ -342,9 +352,8 @@ public:
         // Flush the remaining input, if any
         if (startOfCurrentLine < input.length())
         {
-            std::string line;
             size_t lineLength = input.length() - startOfCurrentLine;
-            line = input.substr(startOfCurrentLine, lineLength);
+            std::string line = input.substr(startOfCurrentLine, lineLength);
             result.push_back(line);
         }
 
@@ -431,7 +440,7 @@ private:
     }
 };
 
-class SetCanvasSizeDialogBox : public DialogBoxCommon
+class SizeInputDialogBox : public DialogBoxCommon
 {
     LabelledTextBox m_widthTextBox;
     LabelledTextBox m_heightTextBox;
@@ -441,11 +450,20 @@ class SetCanvasSizeDialogBox : public DialogBoxCommon
 
 public:
 
-    SetCanvasSizeDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, int widthTextFieldContents, int heightTextFieldContents) : DialogBoxCommon(label)
+    enum class Mode
+    {
+        NewDocument,
+        Resize
+    };
+
+    SizeInputDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, Mode mode) : DialogBoxCommon(label)
     {
         m_dialogResult = DialogResult::None;
-        Layout(parentWindowWidth, parentWindowHeight, widthTextFieldContents, heightTextFieldContents);
+        m_mode = mode;
+        Layout(parentWindowWidth, parentWindowHeight);
     }
+
+    Mode GetMode() const { return m_mode; }
 
     void OnMouseMove(float x, float y)
     {
@@ -544,7 +562,10 @@ public:
     }
 
 private:
-    void Layout(int parentWindowWidth, int parentWindowHeight, int canvasWidthValue, int canvasHeightValue)
+
+    Mode m_mode;
+
+    void Layout(int parentWindowWidth, int parentWindowHeight)
     {
         // Size chosen based on the baked-in choice of elements on the dialog
         int dialogWidth = 300;
@@ -563,10 +584,10 @@ private:
         float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
 
-        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", canvasWidthValue);
+        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", parentWindowWidth);
         layoutY += hackforge::sc_dialogbox_margin;
 
-        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", canvasHeightValue);
+        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", parentWindowHeight);
         layoutY += hackforge::sc_dialogbox_margin;
         layoutY += hackforge::sc_dialogbox_margin;
 
