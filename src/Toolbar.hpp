@@ -13,7 +13,8 @@ enum class Tool
     Pencil,
     Stamp,
     AnglePen,
-    PaintBucket
+    PaintBucket,
+    Eyedropper
 };
 
 void OnToolbarNew();
@@ -26,6 +27,7 @@ void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
+void OnToolbarSetEyedropperTool();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
 void OnToolbarSetCanvasSize();
@@ -252,7 +254,8 @@ public:
       tool.AddChildMenuItem("Pencil", x, OnToolbarSetPencilTool);
       tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
-            tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
+      tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
+      tool.AddChildMenuItem("Eyedropper", x, OnToolbarSetEyedropperTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);

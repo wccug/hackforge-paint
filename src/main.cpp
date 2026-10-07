@@ -478,6 +478,15 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             RenderBucket(hackforge::renderer, hackforge::window_width, hackforge::window_height, hackforge::canvas, hackforge::penColor, hackforge::currentPenX, hackforge::currentPenY);
             hackforge::penDown = false;
         }
+        else if (hackforge::currentTool == hackforge::Tool::Eyedropper)
+        {
+            SDL_Rect rect = { (int)hackforge::currentPenX, (int)hackforge::currentPenY, 1, 1 };
+            SDL_Surface* temporaryCpuRead = SDL_RenderReadPixels(hackforge::renderer, &rect);
+            SDL_Color read{};
+            SDL_ReadSurfacePixel(temporaryCpuRead, 0, 0, &read.r, &read.g, &read.b, &read.a);
+            SDL_DestroySurface(temporaryCpuRead);
+            hackforge::penColor = read;
+        }
     }
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---

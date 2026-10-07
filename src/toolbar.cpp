@@ -62,6 +62,12 @@ void OnToolbarSetPaintBucketTool() {
   hackforge::toolbar.CheckItemAndUncheckOthers(1, 3);
 }
 
+void OnToolbarSetEyedropperTool()
+{
+    hackforge::currentTool = hackforge::Tool::Eyedropper;
+    hackforge::toolbar.CheckItemAndUncheckOthers(1, 4);
+}
+
 void OnToolbarAbout()
 {
     hackforge::infoDialog.reset(new InfoDialogBox(
