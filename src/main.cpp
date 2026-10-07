@@ -58,11 +58,23 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     hackforge::currentTool = hackforge::Tool::Pencil;
 
+    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
+        "Colour",
+        hackforge::window_width,
+        hackforge::window_height,
+        hackforge::penColor));
+
     return SDL_APP_CONTINUE;
 }
 
 void OnMouseMove(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        hackforge::colorPickerDialog->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         hackforge::infoDialog->OnMouseMove(event->motion.x, event->motion.y);
@@ -266,8 +278,33 @@ void OnCloseSetCanvasSizeDialog()
     }
 }
 
+void OnCloseColorPickerDialog()
+{
+    DialogResult result = hackforge::colorPickerDialog->GetDialogResult();
+    SDL_Color newColor = hackforge::colorPickerDialog->GetRequestedColor();
+    hackforge::colorPickerDialog.reset();
+
+    if (result == DialogResult::Cancel)
+    {
+        return;
+    }
+
+    hackforge::penColor = newColor;
+}
+
 void OnKeyboardInput(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        bool closeDialog = false;
+        hackforge::colorPickerDialog->OnKeyboardInput(event->key.key, &closeDialog);
+        if (closeDialog)
+        {
+            OnCloseColorPickerDialog();
+        }
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         bool closeDialog = false;
@@ -293,6 +330,18 @@ void OnKeyboardInput(SDL_Event* event)
 
 void OnMouseLeftClick(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        bool closeDialog = false;
+        hackforge::colorPickerDialog->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &closeDialog);
+
+        if (closeDialog)
+        {
+            OnCloseColorPickerDialog();
+        }
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         bool closeDialog = false;
@@ -513,6 +562,11 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
+    }
+
+    if (hackforge::colorPickerDialog)
+    {
+        hackforge::colorPickerDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     if (hackforge::sizeInputDialog)

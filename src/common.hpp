@@ -36,6 +36,7 @@ inline Tool currentTool;
 inline AnglePen anglePen;
 inline std::unique_ptr<SizeInputDialogBox> sizeInputDialog;
 inline std::unique_ptr<InfoDialogBox> infoDialog;
+inline std::unique_ptr<ColorPickerDialogBox> colorPickerDialog;
 
 } // namespace hackforge
 

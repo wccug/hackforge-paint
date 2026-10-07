@@ -23,5 +23,6 @@ namespace hackforge {
 
     bool IsInBounds(float x, float y, SDL_FRect const& bounds);
     float GetRenderedTextWidthInPixels(size_t stringLength);
+    SDL_FColor OpaqueUnormColorToOpaqueFloatColor(SDL_Color c);
 
 } // namespace hackforge

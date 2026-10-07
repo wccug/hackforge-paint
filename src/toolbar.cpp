@@ -33,8 +33,11 @@ void OnToolbarVerticalFlip() {
 }
 
 void OnToolbarSetPenColor() {
-  hackforge::penColor =
-      hackforge::OpenNativeColorPicker(hackforge::window, hackforge::penColor);
+    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
+        "Set Pen Colour",
+        hackforge::window_width,
+        hackforge::window_height,
+        hackforge::penColor));
 }
 
 void OnToolbarSetUIColor() {
