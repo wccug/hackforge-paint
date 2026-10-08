@@ -9,7 +9,7 @@ class ColorPickerDialogBox : public DialogBoxCommon
     Button m_cancelButton;
     DialogResult m_dialogResult;
 
-    SDL_FRect m_rainbowGradientRect;
+    SDL_FRect m_hueRect;
     SDL_Vertex m_rainbowGradientVertices[14];
     int m_rainbowGradientIndices[36];
 
@@ -20,12 +20,12 @@ class ColorPickerDialogBox : public DialogBoxCommon
     SDL_FRect m_currentColorRect;
 
     SDL_Color m_selectedColor;
-    bool selectedColorNeedsUpdateFromPicking = false;
+    bool m_selectedColorNeedsUpdateFromPicking = false;
 
-    float mainPanelSelectionX = 0;
-    float mainPanelSelectionY = 0;
+    float m_mainPanelSelectionX = 0;
+    float m_mainPanelSelectionY = 0;
 
-    float rainbowGradientSelectionY = 0;
+    float m_hueSelectionY = 0;
 
 public:
 
@@ -68,10 +68,10 @@ public:
 
         if (hackforge::IsInBounds(x, y, m_mainPanelRect) && mouseButtonDown)
         {
-            mainPanelSelectionX = x - m_mainPanelRect.x;
-            mainPanelSelectionY = y - m_mainPanelRect.y;
+            m_mainPanelSelectionX = x - m_mainPanelRect.x;
+            m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
-            selectedColorNeedsUpdateFromPicking = true;
+            m_selectedColorNeedsUpdateFromPicking = true;
             return;
         }
     }
@@ -94,26 +94,94 @@ public:
 
         if (hackforge::IsInBounds(x, y, m_mainPanelRect))
         {
-            mainPanelSelectionX = x - m_mainPanelRect.x;
-            mainPanelSelectionY = y - m_mainPanelRect.y;
+            m_mainPanelSelectionX = x - m_mainPanelRect.x;
+            m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
-            selectedColorNeedsUpdateFromPicking = true;
+            m_selectedColorNeedsUpdateFromPicking = true;
             return;
         }
 
-        if (hackforge::IsInBounds(x, y, m_rainbowGradientRect))
+        if (hackforge::IsInBounds(x, y, m_hueRect))
         {
-            rainbowGradientSelectionY = y - m_rainbowGradientRect.y;
+            m_hueSelectionY = y - m_hueRect.y;
 
             SDL_Color px = SinglePixelCpuReadback((int)x, (int)y, renderer);
 
             // Re-colorize the main panel
             m_mainPanelGradientVertices[1].color = hackforge::OpaqueUnormColorToOpaqueFloatColor(px);
 
-            selectedColorNeedsUpdateFromPicking = true;
+            m_selectedColorNeedsUpdateFromPicking = true;
             return;
         }
     }
+
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    {
+        if (key == 13) // Enter 
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::OK;
+            return;
+        }
+
+        if (key == 27) // Escape 
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::Cancel;
+            return;
+        }
+    }
+
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    {
+        DrawBlankWindow(renderer, uiColor);
+
+        SDL_SetRenderScale(renderer, hackforge::toolbar_text_scaling, hackforge::toolbar_text_scaling);
+
+        SDL_SetRenderScale(renderer, 1, 1);
+        SDL_RenderGeometry(renderer, NULL, m_rainbowGradientVertices, 14, m_rainbowGradientIndices, 36);
+        SDL_RenderGeometry(renderer, NULL, m_mainPanelGradientVertices, 4, m_mainPanelGradientIndices, 6);
+
+        // Draw a rectangle around the currently-selected item on the main panel
+
+        float selectionIndicatorSize = 9;
+        float selectionIndicatorSizeDiv2 = selectionIndicatorSize / 2.0f;
+        {
+            SDL_FRect selectRect{};
+            selectRect.x = m_mainPanelRect.x + m_mainPanelSelectionX - selectionIndicatorSizeDiv2 + 1;
+            selectRect.y = m_mainPanelRect.y + m_mainPanelSelectionY - selectionIndicatorSizeDiv2 + 1;
+            selectRect.w = selectionIndicatorSize;
+            selectRect.h = selectionIndicatorSize;
+            DrawSelectionRect(renderer, selectRect);
+        }
+
+        // Highlight the currently-selected item on the rainbow gradient
+        {
+            SDL_FRect selectRect{};
+            selectRect.x = m_hueRect.x;
+            selectRect.y = m_hueRect.y + m_hueSelectionY - selectionIndicatorSizeDiv2 + 1;
+            selectRect.w = m_hueRect.w;
+            selectRect.h = selectionIndicatorSize;
+            DrawSelectionRect(renderer, selectRect);
+        }
+
+        if (m_selectedColorNeedsUpdateFromPicking)
+        {
+            m_selectedColor = SinglePixelCpuReadback(
+                (int)(m_mainPanelSelectionX + m_mainPanelRect.x),
+                (int)(m_mainPanelSelectionY + m_mainPanelRect.y),
+                renderer);
+            m_selectedColorNeedsUpdateFromPicking = false;
+        }
+        // Draw the currently selected color 
+        SDL_SetRenderDrawColor(renderer, m_selectedColor.r, m_selectedColor.g, m_selectedColor.b, 255);
+        SDL_RenderFillRect(renderer, &m_currentColorRect);
+
+        m_okButton.Draw(renderer, uiColor);
+        m_cancelButton.Draw(renderer, uiColor);
+    }
+
+private:
 
     SDL_Color SinglePixelCpuReadback(int x, int y, SDL_Renderer* renderer)
     {
@@ -126,13 +194,48 @@ public:
         return c;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    float RGBToRainbowPosition(SDL_Color color) 
     {
-        if (key == 13 || key == 27) // Enter or escape
+        SDL_FColor fColor = hackforge::OpaqueUnormColorToOpaqueFloatColor(color);
+
+        // Sanitize inputs to the valid [0.0, 1.0] range
+        float r = std::max(0.0f, std::min(1.0f, fColor.r));
+        float g = std::max(0.0f, std::min(1.0f, fColor.g));
+        float b = std::max(0.0f, std::min(1.0f, fColor.b));
+
+        // Find the maximum and minimum color channels
+        float cMax = std::max({ r, g, b });
+        float cMin = std::min({ r, g, b });
+        float delta = cMax - cMin;
+
+        // Handle grayscale edge case (where Hue is undefined)
+        if (delta == 0.0f) 
         {
-            *pCloseDialog = true;
-            return;
+            return -1.0f;
         }
+
+        // Calculate hue based on whichever channel is dominant
+        float hue = 0.0f;
+        if (cMax == r) 
+        {
+            hue = 60.0f * std::fmod(((g - b) / delta), 6.0f);
+        }
+        else if (cMax == g) 
+        {
+            hue = 60.0f * (((b - r) / delta) + 2.0f);
+        }
+        else if (cMax == b) {
+            hue = 60.0f * (((r - g) / delta) + 4.0f);
+        }
+
+        // Ensure Hue is positive (maps -60°...0° to 300°...360°)
+        if (hue < 0.0f) 
+        {
+            hue += 360.0f;
+        }
+
+        // Map Hue back to the [0.0, 1.0] gradient position
+        return hue / 360.0f;
     }
 
     void InitializeMainPanelGradient()
@@ -143,29 +246,13 @@ public:
         m_mainPanelRect.y = this->m_dialogRect.y + hackforge::toolbar_line_height + hackforge::sc_dialogbox_margin;
 
         // Figure out what initial hue to use
-        Uint8 m = m_selectedColor.r;
-        m = std::max(m, m_selectedColor.g);
-        m = std::max(m, m_selectedColor.b);
-        float scale = static_cast<float>(m);
-        float scaledR = float(m_selectedColor.r) / scale;
-        float scaledG = float(m_selectedColor.g) / scale;
-        float scaledB = float(m_selectedColor.b) / scale;
+        float rainbowPosition = RGBToRainbowPosition(m_selectedColor);
+        m_hueSelectionY = 76;
 
-        // For monochrome, arbitrarily choose red hue
-        if (scaledR == scaledG && scaledR == scaledB)
-        {
-            scaledG = 0;
-            scaledB = 0;
-        }
-        SDL_FColor maxSat{};
-        maxSat.a = 1.0f;
-        maxSat.r = scaledR;
-        maxSat.g = scaledG;
-        maxSat.b = scaledB;
 
         const SDL_FColor panel[4] = {
             {1.0f, 1.0f, 1.0f, 1.0f}, // White
-            maxSat, // Magenta
+            {1.0f, 0.0f, 1.0f, 1.0f}, // Magenta
             {0.0f, 0.0f, 0.0f, 1.0f}, // Black
             {0.0f, 0.0f, 0.0f, 1.0f}, // Black
         };
@@ -197,10 +284,10 @@ public:
 
     void InitializeRainbowGradient()
     {
-        m_rainbowGradientRect.w = 20;
-        m_rainbowGradientRect.h = 200;
-        m_rainbowGradientRect.x = this->m_dialogRect.x + this->m_dialogRect.w - m_rainbowGradientRect.w - hackforge::sc_dialogbox_margin;
-        m_rainbowGradientRect.y = this->m_dialogRect.y + hackforge::toolbar_line_height + hackforge::sc_dialogbox_margin;
+        m_hueRect.w = 20;
+        m_hueRect.h = 200;
+        m_hueRect.x = this->m_dialogRect.x + this->m_dialogRect.w - m_hueRect.w - hackforge::sc_dialogbox_margin;
+        m_hueRect.y = this->m_dialogRect.y + hackforge::toolbar_line_height + hackforge::sc_dialogbox_margin;
 
         const SDL_FColor rainbow[7] = {
             {1.0f, 0.0f, 0.0f, 1.0f}, // Red
@@ -213,19 +300,19 @@ public:
         };
 
         // 7 stops in all
-        float segment_size = m_rainbowGradientRect.h / 6.0f;
+        float segment_size = m_hueRect.h / 6.0f;
         for (int i = 0; i < 7; i++)
         {
-            float vy = m_rainbowGradientRect.y + (i * segment_size);
+            float vy = m_hueRect.y + (i * segment_size);
             SDL_FColor color = rainbow[i];
 
             // Top vertex of the column
-            m_rainbowGradientVertices[i * 2].position.x = m_rainbowGradientRect.x;
+            m_rainbowGradientVertices[i * 2].position.x = m_hueRect.x;
             m_rainbowGradientVertices[i * 2].position.y = vy;
             m_rainbowGradientVertices[i * 2].color = color;
 
             // Bottom vertex of the column
-            m_rainbowGradientVertices[i * 2 + 1].position.x = m_rainbowGradientRect.x + m_rainbowGradientRect.w;
+            m_rainbowGradientVertices[i * 2 + 1].position.x = m_hueRect.x + m_hueRect.w;
             m_rainbowGradientVertices[i * 2 + 1].position.y = vy;
             m_rainbowGradientVertices[i * 2 + 1].color = color;
         }
@@ -261,56 +348,6 @@ public:
         SDL_RenderRect(renderer, &rect);
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
-    {
-        DrawBlankWindow(renderer, uiColor);
-
-        SDL_SetRenderScale(renderer, hackforge::toolbar_text_scaling, hackforge::toolbar_text_scaling);
-
-        SDL_SetRenderScale(renderer, 1, 1);
-        SDL_RenderGeometry(renderer, NULL, m_rainbowGradientVertices, 14, m_rainbowGradientIndices, 36);
-        SDL_RenderGeometry(renderer, NULL, m_mainPanelGradientVertices, 4, m_mainPanelGradientIndices, 6);
-
-        // Draw a rectangle around the currently-selected item on the main panel
-
-        float selectionIndicatorSize = 9;
-        float selectionIndicatorSizeDiv2 = selectionIndicatorSize / 2.0f;
-        {
-            SDL_FRect selectRect{};
-            selectRect.x = m_mainPanelRect.x + mainPanelSelectionX - selectionIndicatorSizeDiv2 + 1;
-            selectRect.y = m_mainPanelRect.y + mainPanelSelectionY - selectionIndicatorSizeDiv2 + 1;
-            selectRect.w = selectionIndicatorSize;
-            selectRect.h = selectionIndicatorSize;
-            DrawSelectionRect(renderer, selectRect);
-        }
-
-        // Highlight the currently-selected item on the rainbow gradient
-        {
-            SDL_FRect selectRect{};
-            selectRect.x = m_rainbowGradientRect.x;
-            selectRect.y = m_rainbowGradientRect.y + rainbowGradientSelectionY - selectionIndicatorSizeDiv2 + 1;
-            selectRect.w = m_rainbowGradientRect.w;
-            selectRect.h = selectionIndicatorSize;
-            DrawSelectionRect(renderer, selectRect);
-        }
-
-        if (selectedColorNeedsUpdateFromPicking)
-        {
-            m_selectedColor = SinglePixelCpuReadback(
-                (int)(mainPanelSelectionX + m_mainPanelRect.x),
-                (int)(mainPanelSelectionY + m_mainPanelRect.y),
-                renderer);
-            selectedColorNeedsUpdateFromPicking = false;
-        }
-        // Draw the currently selected color 
-        SDL_SetRenderDrawColor(renderer, m_selectedColor.r, m_selectedColor.g, m_selectedColor.b, 255);
-        SDL_RenderFillRect(renderer, &m_currentColorRect);
-
-        m_okButton.Draw(renderer, uiColor);
-        m_cancelButton.Draw(renderer, uiColor);
-    }
-
-private:
     void Layout(int parentWindowWidth, int parentWindowHeight)
     {
         // Size chosen based on the baked-in choice of elements on the dialog
