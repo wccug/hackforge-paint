@@ -20,7 +20,8 @@ class ColorPickerDialogBox : public DialogBoxCommon
     SDL_FRect m_currentColorRect;
 
     SDL_Color m_selectedColor;
-    bool m_selectedColorNeedsUpdateFromPicking = false;
+    bool m_rereadSelectedColor = false;
+    bool m_recolorizeMainPanel = false;
 
     float m_mainPanelSelectionX = 0;
     float m_mainPanelSelectionY = 0;
@@ -39,17 +40,14 @@ public:
         : DialogBoxCommon(dialogTitle), m_mode(mode), m_selectedColor(selectedColor)
     {
         Layout(parentWindowWidth, parentWindowHeight);
-        InitializeRainbowGradient();
-        InitializeMainPanelGradient();
 
-        m_currentColorRect.x = m_dialogRect.x + hackforge::sc_dialogbox_margin;
-        m_currentColorRect.y = m_mainPanelRect.y + m_mainPanelRect.h + hackforge::sc_dialogbox_margin;
-        m_currentColorRect.w = 50;
-        m_currentColorRect.h = hackforge::sc_dialogbox_margin;
+        InitializeSelectionUI();
 
         m_dialogResult = DialogResult::None;
 
         m_cancelButton.SetOnMenubar(true);
+
+        m_recolorizeMainPanel = true;
     }
 
     SDL_Color GetRequestedColor() const { return m_selectedColor; }
@@ -71,7 +69,15 @@ public:
             m_mainPanelSelectionX = x - m_mainPanelRect.x;
             m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
-            m_selectedColorNeedsUpdateFromPicking = true;
+            m_rereadSelectedColor = true;
+            return;
+        }
+
+        if (hackforge::IsInBounds(x, y, m_hueRect) && mouseButtonDown)
+        {
+            m_hueSelectionY = y - m_hueRect.y;
+            m_recolorizeMainPanel = true;
+            m_rereadSelectedColor = true;
             return;
         }
     }
@@ -97,20 +103,15 @@ public:
             m_mainPanelSelectionX = x - m_mainPanelRect.x;
             m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
-            m_selectedColorNeedsUpdateFromPicking = true;
+            m_rereadSelectedColor = true;
             return;
         }
 
         if (hackforge::IsInBounds(x, y, m_hueRect))
         {
             m_hueSelectionY = y - m_hueRect.y;
-
-            SDL_Color px = SinglePixelCpuReadback((int)x, (int)y, renderer);
-
-            // Re-colorize the main panel
-            m_mainPanelGradientVertices[1].color = hackforge::OpaqueUnormColorToOpaqueFloatColor(px);
-
-            m_selectedColorNeedsUpdateFromPicking = true;
+            m_recolorizeMainPanel = true;
+            m_rereadSelectedColor = true;
             return;
         }
     }
@@ -136,10 +137,18 @@ public:
     {
         DrawBlankWindow(renderer, uiColor);
 
-        SDL_SetRenderScale(renderer, hackforge::toolbar_text_scaling, hackforge::toolbar_text_scaling);
-
         SDL_SetRenderScale(renderer, 1, 1);
         SDL_RenderGeometry(renderer, NULL, m_rainbowGradientVertices, 14, m_rainbowGradientIndices, 36);
+
+        if (m_recolorizeMainPanel)
+        {
+            SDL_Color px = SinglePixelCpuReadback(static_cast<int>(m_hueRect.x + 2), static_cast<int>(m_hueSelectionY + m_hueRect.y), renderer);
+
+            // Re-colorize the main panel
+            m_mainPanelGradientVertices[1].color = hackforge::OpaqueUnormColorToOpaqueFloatColor(px);
+            m_recolorizeMainPanel = false;
+        }
+
         SDL_RenderGeometry(renderer, NULL, m_mainPanelGradientVertices, 4, m_mainPanelGradientIndices, 6);
 
         // Draw a rectangle around the currently-selected item on the main panel
@@ -165,13 +174,13 @@ public:
             DrawSelectionRect(renderer, selectRect);
         }
 
-        if (m_selectedColorNeedsUpdateFromPicking)
+        if (m_rereadSelectedColor)
         {
             m_selectedColor = SinglePixelCpuReadback(
                 (int)(m_mainPanelSelectionX + m_mainPanelRect.x),
                 (int)(m_mainPanelSelectionY + m_mainPanelRect.y),
                 renderer);
-            m_selectedColorNeedsUpdateFromPicking = false;
+            m_rereadSelectedColor = false;
         }
         // Draw the currently selected color 
         SDL_SetRenderDrawColor(renderer, m_selectedColor.r, m_selectedColor.g, m_selectedColor.b, 255);
@@ -194,7 +203,7 @@ private:
         return c;
     }
 
-    float RGBToRainbowPosition(SDL_Color color) 
+    void RGBToHSV(SDL_Color color, float* pRainbowPosition, float* pSaturation, float* pBrightness) 
     {
         SDL_FColor fColor = hackforge::OpaqueUnormColorToOpaqueFloatColor(color);
 
@@ -208,10 +217,19 @@ private:
         float cMin = std::min({ r, g, b });
         float delta = cMax - cMin;
 
-        // Handle grayscale edge case (where Hue is undefined)
+        *pBrightness = cMax;
+
+        *pSaturation = 0.0f;
+        if (cMax != 0.0f) 
+        {
+            *pSaturation = delta / cMax;
+        }
+
+        // Handle grayscale edge case (where hue is undefined)
         if (delta == 0.0f) 
         {
-            return -1.0f;
+            *pRainbowPosition = -1.0f;
+            return;
         }
 
         // Calculate hue based on whichever channel is dominant
@@ -235,7 +253,31 @@ private:
         }
 
         // Map Hue back to the [0.0, 1.0] gradient position
-        return hue / 360.0f;
+        *pRainbowPosition = hue / 360.0f;
+    }
+
+    void InitializeSelectionUI()
+    {
+        // Figure out what initial hue to use
+        float rainbowPosition, saturation, brightness{};
+        RGBToHSV(m_selectedColor, &rainbowPosition, &saturation, &brightness);
+
+        m_hueSelectionY = 0; // Note: monochrome will leave this at 0, defaulting to red 
+        if (rainbowPosition != -1)  
+        {
+            m_hueSelectionY = m_hueRect.h * rainbowPosition;
+        }
+
+        m_hueSelectionY = std::max(0.0f, m_hueSelectionY);
+        m_hueSelectionY = std::min(m_hueRect.h - 1.0f, m_hueSelectionY);
+
+        m_mainPanelSelectionX = m_mainPanelRect.w * saturation;
+        m_mainPanelSelectionX = std::max(0.0f, m_mainPanelSelectionX);
+        m_mainPanelSelectionX = std::min(m_mainPanelRect.w - 1.0f, m_mainPanelSelectionX);
+
+        m_mainPanelSelectionY = m_mainPanelRect.h * (1.0f - brightness);
+        m_mainPanelSelectionY = std::max(0.0f, m_mainPanelSelectionY);
+        m_mainPanelSelectionY = std::min(m_mainPanelRect.h - 1.0f, m_mainPanelSelectionY);
     }
 
     void InitializeMainPanelGradient()
@@ -244,11 +286,6 @@ private:
         m_mainPanelRect.h = 200;
         m_mainPanelRect.x = this->m_dialogRect.x + hackforge::sc_dialogbox_margin;
         m_mainPanelRect.y = this->m_dialogRect.y + hackforge::toolbar_line_height + hackforge::sc_dialogbox_margin;
-
-        // Figure out what initial hue to use
-        float rainbowPosition = RGBToRainbowPosition(m_selectedColor);
-        m_hueSelectionY = 76;
-
 
         const SDL_FColor panel[4] = {
             {1.0f, 1.0f, 1.0f, 1.0f}, // White
@@ -372,6 +409,15 @@ private:
         m_cancelButton.Layout(&cancelButtonX, &cancelButtonY, "X", hackforge::sc_dialogbox_margin);
 
         LayoutCommon(m_dialogRect.w);
+
+        InitializeRainbowGradient();
+        InitializeMainPanelGradient();
+
+        // Position the "current color" UI, which flows just below the main panel gradient
+        m_currentColorRect.x = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+        m_currentColorRect.y = m_mainPanelRect.y + m_mainPanelRect.h + hackforge::sc_dialogbox_margin;
+        m_currentColorRect.w = 50;
+        m_currentColorRect.h = hackforge::sc_dialogbox_margin;
     }
 
     Mode m_mode;
