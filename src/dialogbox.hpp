@@ -103,15 +103,18 @@ class LabelledTextBox
     bool m_focused;
 
 public:
-    void Layout(float* pLayoutX, float* pLayoutY, float tabWidth, std::string const& labelText, int numericalField)
+    enum FormatMode
+    {
+        Decimal5Digits,
+        Hex6Digits
+    };
+
+    void Layout(float* pLayoutX, float* pLayoutY, float tabWidth, std::string const& labelText, int numericalField, FormatMode formatMode)
     {
         m_labelText = labelText;
+        m_formatMode = formatMode;
 
-        {
-            char buf[5];
-            _itoa_s(numericalField, buf, 10);
-            m_text = buf;
-        }
+        SetNumericalValue(numericalField);
 
         m_labelX = *pLayoutX;
         m_labelY = *pLayoutY;
@@ -125,6 +128,28 @@ public:
 
         m_focused = false;
         m_clearBufferNext = false;
+    }
+
+    void SetNumericalValueFromColor(SDL_Color col)
+    {
+        int rgbValue = (col.r << 16) | (col.g << 8) | col.b;
+        SetNumericalValue(rgbValue);
+    }
+
+    void SetNumericalValue(int numericalField)
+    {
+        if (m_formatMode == FormatMode::Decimal5Digits)
+        {
+            char buf[5];
+            _itoa_s(numericalField, buf, 10);
+            m_text = buf;
+        }
+        else if (m_formatMode == FormatMode::Hex6Digits)
+        {
+            char buf[7];
+            snprintf(buf, sizeof(buf), "%06X", numericalField);
+            m_text = buf;
+        }
     }
 
     void Draw(SDL_Renderer* renderer, SDL_Color uiColor)
@@ -208,13 +233,38 @@ public:
                 m_text.clear();
                 m_clearBufferNext = false;
             }
-            if (m_text.length() < 4)
+
+            int textLimit = m_formatMode == FormatMode::Decimal5Digits ? 4 : 6;
+            if (m_text.length() < textLimit)
             {
                 char keyCh = key;
                 m_text.push_back(keyCh);
             }
+            return;
         }
-        else if (key == 8) // backspace
+
+        if (m_formatMode == FormatMode::Hex6Digits && key >= 'A' && key <= 'F')
+        {
+            if (m_text.length() < 6)
+            {
+                char keyCh = key;
+                m_text.push_back(keyCh);
+            }
+            return;
+        }
+
+        if (m_formatMode == FormatMode::Hex6Digits && key >= 'a' && key <= 'f')
+        {
+            if (m_text.length() < 6)
+            {
+                char keyCh = key;
+                keyCh = toupper(keyCh);
+                m_text.push_back(keyCh);
+            }
+            return;
+        }
+
+        if (key == 8) // backspace
         {
             if (m_text.length() > 0)
             {
@@ -226,13 +276,25 @@ public:
 
     int GetTextFieldNumericValue() const
     {
-        int value = atoi(m_text.c_str());
-        return value;
+        if (m_formatMode == FormatMode::Decimal5Digits)
+        {
+            int value = atoi(m_text.c_str());
+            return value;
+        }
+        else if (m_formatMode == FormatMode::Hex6Digits)
+        {
+            char* endptr;
+            int value = strtol(m_text.c_str(), &endptr, 16);
+            return value;
+        }
     }
 
     bool IsFocused() const { return m_focused; }
 
     void SetFocus(bool value) { m_focused = value; }
+
+    private:
+        FormatMode m_formatMode;
 };
 
 class DialogBoxCommon
@@ -593,10 +655,10 @@ private:
         float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
 
-        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", parentWindowWidth);
+        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", parentWindowWidth, LabelledTextBox::FormatMode::Decimal5Digits);
         layoutY += hackforge::sc_dialogbox_margin;
 
-        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", parentWindowHeight);
+        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", parentWindowHeight, LabelledTextBox::FormatMode::Decimal5Digits);
         layoutY += hackforge::sc_dialogbox_margin;
         layoutY += hackforge::sc_dialogbox_margin;
 

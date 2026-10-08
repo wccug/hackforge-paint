@@ -7,6 +7,8 @@ class ColorPickerDialogBox : public DialogBoxCommon
 {
     Button m_okButton;
     Button m_cancelButton;
+    LabelledTextBox m_hexColorTextBox;
+
     DialogResult m_dialogResult;
 
     SDL_FRect m_hueRect;
@@ -114,6 +116,8 @@ public:
             m_rereadSelectedColor = true;
             return;
         }
+
+        m_hexColorTextBox.OnMouseClick(x, y);
     }
 
     void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
@@ -129,6 +133,23 @@ public:
         {
             *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
+            return;
+        }
+
+        if (m_hexColorTextBox.IsFocused())
+        {
+            int previousNumericValue = m_hexColorTextBox.GetTextFieldNumericValue();
+            m_hexColorTextBox.OnKeyboardInput(key);
+            int newNumericValue = m_hexColorTextBox.GetTextFieldNumericValue();
+
+            if (previousNumericValue == newNumericValue) return;
+
+            // Set the current color based on the typed selection
+            m_selectedColor.b = newNumericValue & 0xFF;
+            m_selectedColor.g = (newNumericValue >> 8) & 0xFF;
+            m_selectedColor.r = (newNumericValue >> 16) & 0xFF;
+            InitializeSelectionUI();
+            m_recolorizeMainPanel = true;
             return;
         }
     }
@@ -180,17 +201,37 @@ public:
                 (int)(m_mainPanelSelectionX + m_mainPanelRect.x),
                 (int)(m_mainPanelSelectionY + m_mainPanelRect.y),
                 renderer);
+            m_hexColorTextBox.SetNumericalValueFromColor(m_selectedColor);
             m_rereadSelectedColor = false;
         }
         // Draw the currently selected color 
         SDL_SetRenderDrawColor(renderer, m_selectedColor.r, m_selectedColor.g, m_selectedColor.b, 255);
         SDL_RenderFillRect(renderer, &m_currentColorRect);
 
+        // Draw outlines around the various UI elements
+        StrokeOutline(renderer, m_mainPanelRect, uiColor);
+        StrokeOutline(renderer, m_hueRect, uiColor);
+        StrokeOutline(renderer, m_currentColorRect, uiColor);
+
         m_okButton.Draw(renderer, uiColor);
         m_cancelButton.Draw(renderer, uiColor);
+        m_hexColorTextBox.Draw(renderer, uiColor);
     }
 
 private:
+
+    void StrokeOutline(SDL_Renderer* renderer, SDL_FRect rect, SDL_Color uiColor)
+    {
+        static float const border = 2.0f;
+
+        rect.x -= border;
+        rect.y -= border;
+        rect.w += border * 2;
+        rect.h += border * 2;
+
+        SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
+        SDL_RenderRect(renderer, &rect);
+    }
 
     SDL_Color SinglePixelCpuReadback(int x, int y, SDL_Renderer* renderer)
     {
@@ -417,7 +458,14 @@ private:
         m_currentColorRect.x = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         m_currentColorRect.y = m_mainPanelRect.y + m_mainPanelRect.h + hackforge::sc_dialogbox_margin;
         m_currentColorRect.w = 50;
-        m_currentColorRect.h = hackforge::sc_dialogbox_margin;
+        m_currentColorRect.h = hackforge::toolbar_height;
+
+        // Put the hex color just to the right
+        float layoutX = m_currentColorRect.x + m_currentColorRect.w + hackforge::sc_dialogbox_margin;
+        float layoutY = m_currentColorRect.y;
+
+        int rgbValue = (m_selectedColor.r << 16) | (m_selectedColor.g << 8) | m_selectedColor.b;
+        m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
     }
 
     Mode m_mode;
