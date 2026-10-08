@@ -566,7 +566,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog;
+    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog || hackforge::colorPickerDialog;
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background

@@ -287,6 +287,8 @@ public:
             int value = strtol(m_text.c_str(), &endptr, 16);
             return value;
         }
+
+        return 0;
     }
 
     bool IsFocused() const { return m_focused; }

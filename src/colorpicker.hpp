@@ -430,7 +430,7 @@ private:
     {
         // Size chosen based on the baked-in choice of elements on the dialog
         int dialogWidth = 280;
-        int dialogHeight = 400;
+        int dialogHeight = 380;
 
         // Center the dialog
         m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));
