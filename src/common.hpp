@@ -5,6 +5,7 @@
 #include "AnglePen.hpp"
 #include "uilayout.hpp"
 #include "dialogbox.hpp"
+#include "colorpicker.hpp"
 
 namespace hackforge {
 
