@@ -34,15 +34,20 @@ void OnToolbarVerticalFlip() {
 
 void OnToolbarSetPenColor() {
     hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
-        "Set Pen Colour",
+        "Set Colour",
         hackforge::window_width,
         hackforge::window_height,
+        ColorPickerDialogBox::Mode::SetPenColor,
         hackforge::penColor));
 }
 
 void OnToolbarSetUIColor() {
-  hackforge::buttonColor = hackforge::OpenNativeColorPicker(
-      hackforge::window, hackforge::buttonColor);
+    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
+        "Set Colour",
+        hackforge::window_width,
+        hackforge::window_height,
+        ColorPickerDialogBox::Mode::SetUIColor,
+        hackforge::penColor));
 }
 
 void OnToolbarSetPencilTool() {

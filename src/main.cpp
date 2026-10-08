@@ -59,9 +59,10 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     hackforge::currentTool = hackforge::Tool::Pencil;
 
     hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
-        "Colour",
+        "Set Colour",
         hackforge::window_width,
         hackforge::window_height,
+        ColorPickerDialogBox::Mode::SetPenColor,
         hackforge::penColor));
 
     return SDL_APP_CONTINUE;
@@ -282,6 +283,7 @@ void OnCloseColorPickerDialog()
 {
     DialogResult result = hackforge::colorPickerDialog->GetDialogResult();
     SDL_Color newColor = hackforge::colorPickerDialog->GetRequestedColor();
+    ColorPickerDialogBox::Mode mode = hackforge::colorPickerDialog->GetMode();
     hackforge::colorPickerDialog.reset();
 
     if (result == DialogResult::Cancel)
@@ -289,7 +291,14 @@ void OnCloseColorPickerDialog()
         return;
     }
 
-    hackforge::penColor = newColor;
+    if (mode == ColorPickerDialogBox::Mode::SetPenColor)
+    {
+        hackforge::penColor = newColor;
+    }
+    else if (mode == ColorPickerDialogBox::Mode::SetUIColor)
+    {
+        hackforge::buttonColor = newColor;
+    }
 }
 
 void OnKeyboardInput(SDL_Event* event)

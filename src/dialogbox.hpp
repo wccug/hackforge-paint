@@ -12,6 +12,7 @@ enum class DialogResult
 
 class Button
 {
+    bool m_onMenubar{};
     bool m_highlight{};
     SDL_FRect m_buttonRect{};
     std::string m_buttonText{};
@@ -40,7 +41,9 @@ public:
     {
         {
             SDL_SetRenderScale(renderer, 1, 1);
-            if (m_highlight)
+
+            // Fill the background
+            if (m_highlight || m_onMenubar)
             {
                 SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
             }
@@ -77,8 +80,14 @@ public:
         m_highlight = hackforge::IsInBounds(x, y, m_buttonRect);
     }
 
+    float GetWidth() const
+    {
+        return m_buttonRect.w;
+    }
 
     bool IsHighlighted() const { return m_highlight; }
+
+    void SetOnMenubar(bool v) { m_onMenubar = v; }
 };
 
 
@@ -624,8 +633,14 @@ class ColorPickerDialogBox : public DialogBoxCommon
 
 public:
 
-    ColorPickerDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, SDL_Color selectedColor)
-        : DialogBoxCommon(dialogTitle), m_selectedColor(selectedColor)
+    enum class Mode
+    {
+        SetPenColor,
+        SetUIColor
+    };
+
+    ColorPickerDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, Mode mode, SDL_Color selectedColor)
+        : DialogBoxCommon(dialogTitle), m_mode(mode), m_selectedColor(selectedColor)
     {
         Layout(parentWindowWidth, parentWindowHeight);
         InitializeRainbowGradient();
@@ -637,9 +652,13 @@ public:
         m_currentColorRect.h = hackforge::sc_dialogbox_margin;
 
         m_dialogResult = DialogResult::None;
+
+        m_cancelButton.SetOnMenubar(true);
     }
 
     SDL_Color GetRequestedColor() const { return m_selectedColor; }
+
+    Mode GetMode() const { return m_mode; }
 
     DialogResult GetDialogResult() const
     {
@@ -674,6 +693,15 @@ public:
         {
             *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
+            return;
+        }
+
+        if (hackforge::IsInBounds(x, y, m_mainPanelRect))
+        {
+            mainPanelSelectionX = x - m_mainPanelRect.x;
+            mainPanelSelectionY = y - m_mainPanelRect.y;
+
+            selectedColorNeedsUpdateFromPicking = true;
             return;
         }
 
@@ -726,6 +754,13 @@ public:
         float scaledR = float(m_selectedColor.r) / scale;
         float scaledG = float(m_selectedColor.g) / scale;
         float scaledB = float(m_selectedColor.b) / scale;
+
+        // For monochrome, arbitrarily choose red hue
+        if (scaledR == scaledG && scaledR == scaledB)
+        {
+            scaledG = 0;
+            scaledB = 0;
+        }
         SDL_FColor maxSat{};
         maxSat.a = 1.0f;
         maxSat.r = scaledR;
@@ -895,10 +930,16 @@ private:
 
         // Position the OK button
         float okButtonWidth = hackforge::GetRenderedTextWidthInPixels(2) + hackforge::sc_dialogbox_margin + hackforge::sc_dialogbox_margin;
-        float okButtonX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+        float okButtonX = m_dialogRect.x + (m_dialogRect.w / 2) - (okButtonWidth / 2);
         float okButtonY = m_dialogRect.y + m_dialogRect.h - hackforge::toolbar_height - hackforge::sc_dialogbox_margin;
         m_okButton.Layout(&okButtonX, &okButtonY, "OK", hackforge::sc_dialogbox_margin);
 
+        float cancelButtonX = m_dialogRect.x + m_dialogRect.w - 56;
+        float cancelButtonY = m_dialogRect.y;
+        m_cancelButton.Layout(&cancelButtonX, &cancelButtonY, "X", hackforge::sc_dialogbox_margin);
+
         LayoutCommon(m_dialogRect.w);
     }
+
+    Mode m_mode;
 };
