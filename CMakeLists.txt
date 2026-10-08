@@ -17,7 +17,6 @@ add_executable(hackforge-paint
    src/main.cpp
    src/toolbar.cpp
    src/bucket.cpp
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker_linux.cpp>
    $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar_linux.cpp>
 )
 
