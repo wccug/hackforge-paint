@@ -1,11 +1,11 @@
 #include <SDL3/SDL.h>
 #include <memory>
 
-#include "Toolbar.hpp"
 #include "AnglePen.hpp"
-#include "uilayout.hpp"
-#include "dialogbox.hpp"
+#include "Toolbar.hpp"
 #include "colorpicker.hpp"
+#include "dialogbox.hpp"
+#include "uilayout.hpp"
 
 namespace hackforge {
 
