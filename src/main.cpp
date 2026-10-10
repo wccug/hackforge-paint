@@ -58,13 +58,6 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     hackforge::currentTool = hackforge::Tool::Pencil;
 
-    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
-        "Set Colour",
-        hackforge::window_width,
-        hackforge::window_height,
-        ColorPickerDialogBox::Mode::SetPenColor,
-        hackforge::penColor));
-
     return SDL_APP_CONTINUE;
 }
 
