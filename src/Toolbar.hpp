@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "LayoutConstants.hpp"
+#include "uilayout.hpp"
 
 namespace hackforge {
 
@@ -13,11 +13,12 @@ enum class Tool
     Pencil,
     Stamp,
     AnglePen,
-    PaintBucket
+    PaintBucket,
+    Eyedropper
 };
 
 void OnToolbarNew();
-void OnToolbarSave();
+void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
@@ -26,8 +27,11 @@ void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
+void OnToolbarSetEyedropperTool();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
+void OnToolbarSetCanvasSize();
+void OnToolbarAbout();
 
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
@@ -96,12 +100,7 @@ protected:
   bool m_checkedState;
 
   bool IsInBounds(float x, float y) {
-    if (x > m_bounds.x && x < m_bounds.x + m_bounds.w && y > m_bounds.y &&
-        y < m_bounds.y + m_bounds.h) {
-      return true;
-    } else {
-      return false;
-    }
+      return hackforge::IsInBounds(x, y, m_bounds);
   }
 };
 
@@ -200,13 +199,10 @@ public:
     m_bounds.x = x;
     m_bounds.y = 0;
     m_bounds.h = hackforge::toolbar_height;
-    float labelWidth = m_label.length() * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE *
-                       hackforge::toolbar_text_scaling;
+    float labelWidth = hackforge::GetRenderedTextWidthInPixels(m_label.length());
     m_bounds.w = labelWidth;
 
-    m_expandedBoxWidth = m_longestLabelLength *
-                         SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE *
-                         hackforge::toolbar_text_scaling;
+    m_expandedBoxWidth = hackforge::GetRenderedTextWidthInPixels(m_longestLabelLength);
     for (size_t i = 0; i < m_childMenuItems.size(); ++i) {
       m_childMenuItems[i].SetWidth(m_expandedBoxWidth);
     }
@@ -241,8 +237,9 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
-      file.AddChildMenuItem("Timestamp Save", x, OnToolbarSave);
+      file.AddChildMenuItem("Quick Save", x, OnToolbarQuickSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
+      file.AddChildMenuItem("Set Canvas Size", x, OnToolbarSetCanvasSize);
       file.AddChildMenuItem("Exit", x, OnToolbarExit);
       file.FinishLayout(x);
       float toolbarWidth = file.GetWidth();
@@ -257,7 +254,8 @@ public:
       tool.AddChildMenuItem("Pencil", x, OnToolbarSetPencilTool);
       tool.AddChildMenuItem("Stamp", x, OnToolbarSetStampTool);
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
-            tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
+      tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
+      tool.AddChildMenuItem("Eyedropper", x, OnToolbarSetEyedropperTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);
@@ -282,11 +280,7 @@ public:
       TopLevelMenuItem color;
       color.SetLabel("Colour");
       color.AddChildMenuItem(
-#ifdef __linux__
-        "Randomize Pen Colour",
-#else
         "Pen Colour",
-#endif
         x, OnToolbarSetPenColor);
       color.FinishLayout(x);
       float toolbarWidth = color.GetWidth();
@@ -305,6 +299,17 @@ public:
 
       x += toolbarWidth;
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+    }
+    {
+        TopLevelMenuItem help;
+        help.SetLabel("Help");
+        help.AddChildMenuItem("About", x, OnToolbarAbout);
+        help.FinishLayout(x);
+        float toolbarWidth = help.GetWidth();
+        m_toolbarItems.push_back(help);
+
+        x += toolbarWidth;
+        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
   }
 
@@ -350,24 +355,7 @@ public:
     }
   }
 
-  void Render(SDL_Renderer *renderer, SDL_Color uiColor) {
-    // Render a filled rectangle at the top
-    {
-      SDL_FRect rect{};
-      rect.x = 0;
-      rect.y = 0;
-      rect.w = hackforge::window_width;
-      rect.h = hackforge::toolbar_height;
-      SDL_SetRenderScale(renderer, 1, 1);
-      SDL_SetRenderDrawColor(renderer, uiColor.r, uiColor.g, uiColor.b, 255);
-      SDL_RenderFillRect(renderer, &rect);
-    }
-
-    // Draw the toolbar UI for child items
-    for (size_t i = 0; i < m_toolbarItems.size(); ++i) {
-      m_toolbarItems[i].Render(renderer, uiLayoutState, uiColor);
-    }
-  }
+  void Render(SDL_Renderer* renderer, SDL_Color uiColor);
 
   void SetChildMenuItemCheckedState(size_t toolbarIndex,
                                     size_t childMenuItemIndex,

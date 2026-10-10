@@ -17,7 +17,7 @@ add_executable(hackforge-paint
    src/main.cpp
    src/toolbar.cpp
    src/bucket.cpp
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/colorpicker_linux.cpp>
+   src/uilayout.cpp
    $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar_linux.cpp>
 )
 
@@ -26,7 +26,8 @@ add_executable(hackforge-paint
 # builds, see the accompanying MSBuild file and instructions.
 
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
-target_link_libraries(hackforge-paint SDL3::SDL3 SDL3_image )
+find_package(SDL3_image REQUIRED)
+target_link_libraries(hackforge-paint SDL3::SDL3 SDL3_image::SDL3_image)
 
 # The Linux native color picker talks to the XDG desktop portal over
 # D-Bus, so link libdbus-1 on Linux. Install `libdbus-1-dev` if

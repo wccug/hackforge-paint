@@ -47,6 +47,9 @@ Building on Linux
    headers for building software.  On Debian-based distros this means
    installing the package `libsdl3-dev` instead of just `libsdl3`.
 
+3. Install the SDL3_image library from your package manager. On Debian-based
+   distros this is `libsdl3-image-dev`.
+
 2. Create a build directory under the root directory of the
    checked-out repository, and run cmake therein:
 
