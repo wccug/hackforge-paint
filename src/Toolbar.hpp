@@ -280,11 +280,7 @@ public:
       TopLevelMenuItem color;
       color.SetLabel("Colour");
       color.AddChildMenuItem(
-#ifdef __linux__
-        "Randomize Pen Colour",
-#else
         "Pen Colour",
-#endif
         x, OnToolbarSetPenColor);
       color.FinishLayout(x);
       float toolbarWidth = color.GetWidth();

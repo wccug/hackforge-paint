@@ -24,9 +24,6 @@
     <ClCompile Include="src\toolbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32\colorpicker_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\win32\toolbar_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

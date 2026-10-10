@@ -63,6 +63,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 void OnMouseMove(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        hackforge::colorPickerDialog->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         hackforge::infoDialog->OnMouseMove(event->motion.x, event->motion.y);
@@ -266,8 +272,41 @@ void OnCloseSetCanvasSizeDialog()
     }
 }
 
+void OnCloseColorPickerDialog()
+{
+    DialogResult result = hackforge::colorPickerDialog->GetDialogResult();
+    SDL_Color newColor = hackforge::colorPickerDialog->GetRequestedColor();
+    ColorPickerDialogBox::Mode mode = hackforge::colorPickerDialog->GetMode();
+    hackforge::colorPickerDialog.reset();
+
+    if (result == DialogResult::Cancel)
+    {
+        return;
+    }
+
+    if (mode == ColorPickerDialogBox::Mode::SetPenColor)
+    {
+        hackforge::penColor = newColor;
+    }
+    else if (mode == ColorPickerDialogBox::Mode::SetUIColor)
+    {
+        hackforge::buttonColor = newColor;
+    }
+}
+
 void OnKeyboardInput(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        bool closeDialog = false;
+        hackforge::colorPickerDialog->OnKeyboardInput(event->key.key, &closeDialog);
+        if (closeDialog)
+        {
+            OnCloseColorPickerDialog();
+        }
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         bool closeDialog = false;
@@ -293,6 +332,18 @@ void OnKeyboardInput(SDL_Event* event)
 
 void OnMouseLeftClick(SDL_Event* event)
 {
+    if (hackforge::colorPickerDialog)
+    {
+        bool closeDialog = false;
+        hackforge::colorPickerDialog->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &closeDialog);
+
+        if (closeDialog)
+        {
+            OnCloseColorPickerDialog();
+        }
+        return;
+    }
+
     if (hackforge::infoDialog)
     {
         bool closeDialog = false;
@@ -508,11 +559,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog;
+    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog || hackforge::colorPickerDialog;
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
+    }
+
+    if (hackforge::colorPickerDialog)
+    {
+        hackforge::colorPickerDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     if (hackforge::sizeInputDialog)
