@@ -8,14 +8,7 @@
 
 namespace hackforge {
 
-enum class Tool
-{
-    Pencil,
-    Stamp,
-    AnglePen,
-    PaintBucket,
-    Eyedropper
-};
+enum class Tool { Pencil, Stamp, AnglePen, PaintBucket, Eyedropper };
 
 void OnToolbarNew();
 void OnToolbarQuickSave();
@@ -36,61 +29,49 @@ void OnToolbarAbout();
 class MenuItem; // Forward declare
 class TopLevelMenuItem;
 
-struct UILayoutState
-{
-    // For each of these, only one is permitted at a time.
-    MenuItem* WhichItemMousedOver;
-    TopLevelMenuItem* WhichItemExpanded;
+struct UILayoutState {
+  // For each of these, only one is permitted at a time.
+  MenuItem *WhichItemMousedOver;
+  TopLevelMenuItem *WhichItemExpanded;
 };
 
 // Common base class for top-level menu items and child menu items.
-class MenuItem
-{
+class MenuItem {
 public:
+  MenuItem() : m_bounds{}, m_checkedState(false) {
+  }
 
-    MenuItem() : m_bounds{}, m_checkedState(false)
-    {
+  virtual ~MenuItem() = default;
+
+  void SetLabel(std::string const &label) {
+    m_label = label;
+  }
+
+  void SetBounds(float x, float y, float w, float h) {
+    m_bounds.x = x;
+    m_bounds.y = y;
+    m_bounds.w = w;
+    m_bounds.h = h;
+  }
+
+  void RenderLabel(SDL_Renderer *renderer, UILayoutState const &uiLayoutState) {
+    const float textScale = hackforge::toolbar_text_scaling;
+    SDL_SetRenderScale(renderer, textScale, textScale);
+    if (uiLayoutState.WhichItemMousedOver == this) {
+      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    } else if (m_checkedState) {
+      SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+    } else {
+      SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     }
+    SDL_RenderDebugText(
+        renderer, m_bounds.x / hackforge::toolbar_text_scaling,
+        m_bounds.y / hackforge::toolbar_text_scaling +
+            (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
+        m_label.c_str());
+  }
 
-    virtual ~MenuItem() = default;
-
-    void SetLabel(std::string const& label)
-    {
-        m_label = label;
-    }
-
-    void SetBounds(float x, float y, float w, float h)
-    {
-        m_bounds.x = x;
-        m_bounds.y = y;
-        m_bounds.w = w;
-        m_bounds.h = h;
-    }
-
-    void RenderLabel(SDL_Renderer* renderer, UILayoutState const& uiLayoutState)
-    {
-        const float textScale = hackforge::toolbar_text_scaling;
-        SDL_SetRenderScale(renderer, textScale, textScale);
-        if (uiLayoutState.WhichItemMousedOver == this)
-        {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        }
-        else if (m_checkedState)
-        {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-        }
-        else
-        {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        }
-        SDL_RenderDebugText(
-            renderer,
-            m_bounds.x / hackforge::toolbar_text_scaling,
-            m_bounds.y / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4) ),
-            m_label.c_str());
-    }
-
-    void SetCheckedState(bool b) {
+  void SetCheckedState(bool b) {
     m_checkedState = b;
   }
 
@@ -100,7 +81,7 @@ protected:
   bool m_checkedState;
 
   bool IsInBounds(float x, float y) {
-      return hackforge::IsInBounds(x, y, m_bounds);
+    return hackforge::IsInBounds(x, y, m_bounds);
   }
 };
 
@@ -199,10 +180,12 @@ public:
     m_bounds.x = x;
     m_bounds.y = 0;
     m_bounds.h = hackforge::toolbar_height;
-    float labelWidth = hackforge::GetRenderedTextWidthInPixels(m_label.length());
+    float labelWidth =
+        hackforge::GetRenderedTextWidthInPixels(m_label.length());
     m_bounds.w = labelWidth;
 
-    m_expandedBoxWidth = hackforge::GetRenderedTextWidthInPixels(m_longestLabelLength);
+    m_expandedBoxWidth =
+        hackforge::GetRenderedTextWidthInPixels(m_longestLabelLength);
     for (size_t i = 0; i < m_childMenuItems.size(); ++i) {
       m_childMenuItems[i].SetWidth(m_expandedBoxWidth);
     }
@@ -265,23 +248,21 @@ public:
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
-        TopLevelMenuItem effect;
-        effect.SetLabel("Effect");
-        effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
-        effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
-        effect.FinishLayout(x);
-        float toolbarWidth = effect.GetWidth();
-        m_toolbarItems.push_back(effect);
+      TopLevelMenuItem effect;
+      effect.SetLabel("Effect");
+      effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
+      effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
+      effect.FinishLayout(x);
+      float toolbarWidth = effect.GetWidth();
+      m_toolbarItems.push_back(effect);
 
-        x += toolbarWidth;
-        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+      x += toolbarWidth;
+      x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
       TopLevelMenuItem color;
       color.SetLabel("Colour");
-      color.AddChildMenuItem(
-        "Pen Colour",
-        x, OnToolbarSetPenColor);
+      color.AddChildMenuItem("Pen Colour", x, OnToolbarSetPenColor);
       color.FinishLayout(x);
       float toolbarWidth = color.GetWidth();
       m_toolbarItems.push_back(color);
@@ -301,15 +282,15 @@ public:
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
-        TopLevelMenuItem help;
-        help.SetLabel("Help");
-        help.AddChildMenuItem("About", x, OnToolbarAbout);
-        help.FinishLayout(x);
-        float toolbarWidth = help.GetWidth();
-        m_toolbarItems.push_back(help);
+      TopLevelMenuItem help;
+      help.SetLabel("Help");
+      help.AddChildMenuItem("About", x, OnToolbarAbout);
+      help.FinishLayout(x);
+      float toolbarWidth = help.GetWidth();
+      m_toolbarItems.push_back(help);
 
-        x += toolbarWidth;
-        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+      x += toolbarWidth;
+      x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
   }
 
@@ -355,7 +336,7 @@ public:
     }
   }
 
-  void Render(SDL_Renderer* renderer, SDL_Color uiColor);
+  void Render(SDL_Renderer *renderer, SDL_Color uiColor);
 
   void SetChildMenuItemCheckedState(size_t toolbarIndex,
                                     size_t childMenuItemIndex,
@@ -364,15 +345,16 @@ public:
         childMenuItemIndex, checkedState);
   }
 
-  void CheckItemAndUncheckOthers(size_t toolbarIndex, size_t childMenuItemIndex)
-  {
-      size_t numChildMenuItems = m_toolbarItems[toolbarIndex].GetNumChildMenuItems();
+  void CheckItemAndUncheckOthers(size_t toolbarIndex,
+                                 size_t childMenuItemIndex) {
+    size_t numChildMenuItems =
+        m_toolbarItems[toolbarIndex].GetNumChildMenuItems();
 
-      for (size_t i = 0; i < numChildMenuItems; ++i)
-      {
-          bool checkedState = childMenuItemIndex == i;
-          m_toolbarItems[toolbarIndex].SetChildMenuItemCheckedState(i, checkedState);
-      }
+    for (size_t i = 0; i < numChildMenuItems; ++i) {
+      bool checkedState = childMenuItemIndex == i;
+      m_toolbarItems[toolbarIndex].SetChildMenuItemCheckedState(i,
+                                                                checkedState);
+    }
   }
 };
 
