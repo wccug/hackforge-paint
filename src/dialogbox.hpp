@@ -140,9 +140,7 @@ public:
     {
         if (m_formatMode == FormatMode::Decimal5Digits)
         {
-            char buf[5];
-            _itoa_s(numericalField, buf, 10);
-            m_text = buf;
+            m_text = std::to_string(numericalField).substr(0, 10);
         }
         else if (m_formatMode == FormatMode::Hex6Digits)
         {
@@ -580,7 +578,7 @@ public:
             }
             return;
         }
-        
+
         if (key == 13) // Enter
         {
             *pCloseDialog = true;
@@ -622,8 +620,8 @@ public:
         return m_dialogResult;
     }
 
-    int GetRequestedCanvasWidth() 
-    { 
+    int GetRequestedCanvasWidth()
+    {
         int value = m_widthTextBox.GetTextFieldNumericValue();
         return value;
     }
@@ -642,7 +640,7 @@ private:
     {
         // Size chosen based on the baked-in choice of elements on the dialog
         int dialogWidth = 300;
-        int dialogHeight = 260; 
+        int dialogHeight = 260;
 
         // Center the dialog
         m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));

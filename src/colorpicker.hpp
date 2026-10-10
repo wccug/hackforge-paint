@@ -2,6 +2,7 @@
 #define COLORPICKER_H
 
 #include "dialogbox.hpp"
+#include <cmath>
 
 class ColorPickerDialogBox : public DialogBoxCommon
 {
@@ -122,14 +123,14 @@ public:
 
     void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
     {
-        if (key == 13) // Enter 
+        if (key == 13) // Enter
         {
             *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
             return;
         }
 
-        if (key == 27) // Escape 
+        if (key == 27) // Escape
         {
             *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
@@ -204,7 +205,7 @@ public:
             m_hexColorTextBox.SetNumericalValueFromColor(m_selectedColor);
             m_rereadSelectedColor = false;
         }
-        // Draw the currently selected color 
+        // Draw the currently selected color
         SDL_SetRenderDrawColor(renderer, m_selectedColor.r, m_selectedColor.g, m_selectedColor.b, 255);
         SDL_RenderFillRect(renderer, &m_currentColorRect);
 
@@ -244,7 +245,7 @@ private:
         return c;
     }
 
-    void RGBToHSV(SDL_Color color, float* pRainbowPosition, float* pSaturation, float* pBrightness) 
+    void RGBToHSV(SDL_Color color, float* pRainbowPosition, float* pSaturation, float* pBrightness)
     {
         SDL_FColor fColor = hackforge::OpaqueUnormColorToOpaqueFloatColor(color);
 
@@ -254,20 +255,20 @@ private:
         float b = std::max(0.0f, std::min(1.0f, fColor.b));
 
         // Find the maximum and minimum color channels
-        float cMax = std::max({ r, g, b });
-        float cMin = std::min({ r, g, b });
+        float cMax = std::max(std::max(r, g), b);
+        float cMin = std::min(std::min(r, g), b);
         float delta = cMax - cMin;
 
         *pBrightness = cMax;
 
         *pSaturation = 0.0f;
-        if (cMax != 0.0f) 
+        if (cMax != 0.0f)
         {
             *pSaturation = delta / cMax;
         }
 
         // Handle grayscale edge case (where hue is undefined)
-        if (delta == 0.0f) 
+        if (delta == 0.0f)
         {
             *pRainbowPosition = -1.0f;
             return;
@@ -275,11 +276,11 @@ private:
 
         // Calculate hue based on whichever channel is dominant
         float hue = 0.0f;
-        if (cMax == r) 
+        if (cMax == r)
         {
             hue = 60.0f * std::fmod(((g - b) / delta), 6.0f);
         }
-        else if (cMax == g) 
+        else if (cMax == g)
         {
             hue = 60.0f * (((b - r) / delta) + 2.0f);
         }
@@ -288,7 +289,7 @@ private:
         }
 
         // Ensure Hue is positive (maps -60°...0° to 300°...360°)
-        if (hue < 0.0f) 
+        if (hue < 0.0f)
         {
             hue += 360.0f;
         }
@@ -303,8 +304,8 @@ private:
         float rainbowPosition, saturation, brightness{};
         RGBToHSV(m_selectedColor, &rainbowPosition, &saturation, &brightness);
 
-        m_hueSelectionY = 0; // Note: monochrome will leave this at 0, defaulting to red 
-        if (rainbowPosition != -1)  
+        m_hueSelectionY = 0; // Note: monochrome will leave this at 0, defaulting to red
+        if (rainbowPosition != -1)
         {
             m_hueSelectionY = m_hueRect.h * rainbowPosition;
         }
