@@ -2,6 +2,7 @@
 #define COLORPICKER_H
 
 #include "dialogbox.hpp"
+#include <algorithm>
 #include <cmath>
 
 class ColorPickerDialogBox : public DialogBoxCommon
@@ -255,8 +256,8 @@ private:
         float b = std::max(0.0f, std::min(1.0f, fColor.b));
 
         // Find the maximum and minimum color channels
-        float cMax = std::max(std::max(r, g), b);
-        float cMin = std::min(std::min(r, g), b);
+        float cMax = std::max({r, g, b});
+        float cMin = std::min({r, g, b});
         float delta = cMax - cMin;
 
         *pBrightness = cMax;
