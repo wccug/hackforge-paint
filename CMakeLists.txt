@@ -18,6 +18,7 @@ add_executable(hackforge-paint
    src/toolbar.cpp
    src/bucket.cpp
    src/uilayout.cpp
+   src/actions.cpp
    $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar_linux.cpp>
 )
 

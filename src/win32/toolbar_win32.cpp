@@ -1,6 +1,7 @@
 #include "../common.hpp"
 #include "../toolbar.hpp"
 #include "../colorpicker.hpp"
+#include "../actions.hpp"
 
 #include <Windows.h>
 #include <Shlobj.h>
@@ -43,17 +44,7 @@ void OnToolbarSaveAs() {
 
   std::string destFilename = ofn.lpstrFile;
 
-  // In SDL, textures are GPU-side, surfaces are CPU-side.
-  // We have to copy the GPU-side texture to CPU to save to disk.
-  SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
-  SDL_Rect rect{};
-  rect.w = hackforge::window_width;
-  rect.h = hackforge::window_height;
-  SDL_Surface *surface = SDL_RenderReadPixels(hackforge::renderer, &rect);
-  SDL_CreateSurfaceFrom(hackforge::window_width, hackforge::window_height,
-                        hackforge::canvas->format, nullptr, 0);
-  SDL_SavePNG(surface, destFilename.c_str());
-  SDL_DestroySurface(surface);
+  SaveCanvasToFile(destFilename.c_str());
 }
 
 } // namespace hackforge
