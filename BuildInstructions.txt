@@ -61,3 +61,5 @@ Building on Linux
 3. Build the executable. With the above cmake invocation, it should
    suffice to just type `make` in your build directory. Alternatively,
    run `cmake --build . --target hackforge-paint`
+
+4. To enable OS features on linux (EG 'Save As' dialogue), follow the build instructions in xdg-portal-wrapper/README.md

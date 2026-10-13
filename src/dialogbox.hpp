@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <cassert>
+#include <vector>
 #include "uilayout.hpp"
 
 enum class DialogResult

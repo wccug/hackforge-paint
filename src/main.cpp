@@ -9,6 +9,7 @@
 #include <chrono>
 #include <string>
 
+#include "actions.hpp"
 #include "colorpicker.hpp"
 #include "common.hpp"
 #include "dialogbox.hpp"
@@ -477,10 +478,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             std::chrono::system_clock::now().time_since_epoch()).count();
         const auto filename = "hackforge-paint-file-" + std::to_string(ms) + ".png";
 
-        SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
-        SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, nullptr);
-        IMG_SavePNG(surface,filename.c_str());
-        SDL_DestroySurface(surface);
+        SaveCanvasToFile(filename.c_str());
         hackforge::doQuickSave = false;
 
         std::stringstream messageBoxText;
