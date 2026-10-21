@@ -55,7 +55,7 @@ void OnToolbarSetUIColor() {
         hackforge::window_width,
         hackforge::window_height,
         ColorPickerDialogBox::Mode::SetUIColor,
-        hackforge::penColor));
+        hackforge::buttonColor));
 }
 
 void OnToolbarSetPencilTool() {
