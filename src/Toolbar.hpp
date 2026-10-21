@@ -22,6 +22,7 @@ void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
+void OnToolbarSetPenRadius();
 void OnToolbarSetUIColor();
 void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
@@ -265,6 +266,22 @@ public:
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
+        TopLevelMenuItem attributes;
+        attributes.SetLabel("Attributes");
+        attributes.AddChildMenuItem(
+            "Pen Colour",
+            x, OnToolbarSetPenColor);
+        attributes.AddChildMenuItem(
+            "Pen Radius",
+            x, OnToolbarSetPenRadius);
+        attributes.FinishLayout(x);
+        float toolbarWidth = attributes.GetWidth();
+        m_toolbarItems.push_back(attributes);
+
+        x += toolbarWidth;
+        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+    }
+    {
         TopLevelMenuItem effect;
         effect.SetLabel("Effect");
         effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
@@ -275,19 +292,6 @@ public:
 
         x += toolbarWidth;
         x += hackforge::toolbar_top_level_menu_horizontal_spacing;
-    }
-    {
-      TopLevelMenuItem color;
-      color.SetLabel("Colour");
-      color.AddChildMenuItem(
-        "Pen Colour",
-        x, OnToolbarSetPenColor);
-      color.FinishLayout(x);
-      float toolbarWidth = color.GetWidth();
-      m_toolbarItems.push_back(color);
-
-      x += toolbarWidth;
-      x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
       TopLevelMenuItem view;

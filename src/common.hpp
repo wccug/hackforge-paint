@@ -29,6 +29,7 @@ inline bool doVerticalFlip = false;
 
 // --- State variables for the Custom Tooling colors ---
 inline SDL_Color penColor = {255, 255, 255, 255}; // Default Pen: White
+inline int penRadius = 10;
 inline SDL_Color buttonColor = {100, 100, 100,
                                 255}; // Default Button Background: Dark Gray
 
@@ -38,6 +39,7 @@ inline AnglePen anglePen;
 inline std::unique_ptr<SizeInputDialogBox> sizeInputDialog;
 inline std::unique_ptr<InfoDialogBox> infoDialog;
 inline std::unique_ptr<ColorPickerDialogBox> colorPickerDialog;
+inline std::unique_ptr<SingleNumberInputDialogBox> penRadiusDialog;
 
 } // namespace hackforge
 

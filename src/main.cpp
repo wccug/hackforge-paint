@@ -63,6 +63,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 void OnMouseMove(SDL_Event* event)
 {
+    if (hackforge::penRadiusDialog)
+    {
+        hackforge::penRadiusDialog->OnMouseMove(event->motion.x, event->motion.y);
+        return;
+    }
+
     if (hackforge::colorPickerDialog)
     {
         hackforge::colorPickerDialog->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
@@ -294,8 +300,33 @@ void OnCloseColorPickerDialog()
     }
 }
 
+void OnClosePenRadiusDialog()
+{
+    DialogResult result = hackforge::penRadiusDialog->GetDialogResult();
+    int newRadius = hackforge::penRadiusDialog->GetRequestedValue();
+    hackforge::penRadiusDialog.reset();
+
+    if (result == DialogResult::Cancel)
+    {
+        return;
+    }
+
+    hackforge::penRadius = newRadius;
+}
+
 void OnKeyboardInput(SDL_Event* event)
 {
+    if (hackforge::penRadiusDialog)
+    {
+        bool closeDialog = false;
+        hackforge::penRadiusDialog->OnKeyboardInput(event->key.key, &closeDialog);
+        if (closeDialog)
+        {
+            OnClosePenRadiusDialog();
+        }
+        return;
+    }
+
     if (hackforge::colorPickerDialog)
     {
         bool closeDialog = false;
@@ -332,6 +363,18 @@ void OnKeyboardInput(SDL_Event* event)
 
 void OnMouseLeftClick(SDL_Event* event)
 {
+    if (hackforge::penRadiusDialog)
+    {
+        bool closeDialog = false;
+        hackforge::penRadiusDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
+
+        if (closeDialog)
+        {
+            OnClosePenRadiusDialog();
+        }
+        return;
+    }
+
     if (hackforge::colorPickerDialog)
     {
         bool closeDialog = false;
@@ -355,6 +398,7 @@ void OnMouseLeftClick(SDL_Event* event)
         }
         return;
     }
+
     if (hackforge::sizeInputDialog)
     {
         bool closeDialog = false;
@@ -523,8 +567,8 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             SDL_FRect rect{};
             rect.x = hackforge::currentPenX;
             rect.y = hackforge::currentPenY;
-            rect.w = 10.0f;
-            rect.h = 10.0f;
+            rect.w = hackforge::penRadius;
+            rect.h = hackforge::penRadius;
 
             // Use dynamic active pen color chosen from picker
             SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
@@ -533,7 +577,14 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         }
         else if (hackforge::currentTool == hackforge::Tool::AnglePen)
         {
-            hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
+            hackforge::anglePen.Render(
+                hackforge::renderer, 
+                hackforge::previousPenX, 
+                hackforge::previousPenY, 
+                hackforge::currentPenX, 
+                hackforge::currentPenY, 
+                hackforge::penColor,
+                hackforge::penRadius);
         }
         else if (hackforge::currentTool == hackforge::Tool::PaintBucket)
         {
@@ -559,11 +610,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog || hackforge::colorPickerDialog;
+    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog || hackforge::colorPickerDialog || hackforge::penRadiusDialog;
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
+    }
+
+    if (hackforge::penRadiusDialog)
+    {
+        hackforge::penRadiusDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     if (hackforge::colorPickerDialog)

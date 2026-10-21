@@ -41,6 +41,14 @@ void OnToolbarSetPenColor() {
         hackforge::penColor));
 }
 
+void OnToolbarSetPenRadius() {
+    hackforge::penRadiusDialog.reset(new SingleNumberInputDialogBox(
+        "Set Radius",
+        hackforge::window_width,
+        hackforge::window_height,
+        hackforge::penRadius));
+}
+
 void OnToolbarSetUIColor() {
     hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
         "Set Colour",

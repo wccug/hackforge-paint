@@ -511,6 +511,118 @@ private:
     }
 };
 
+class SingleNumberInputDialogBox : public DialogBoxCommon
+{
+    LabelledTextBox m_textBox;
+    Button m_okButton;
+    Button m_cancelButton;
+    DialogResult m_dialogResult;
+
+public:
+    SingleNumberInputDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, int numericValue) : DialogBoxCommon(label)
+    {
+        m_dialogResult = DialogResult::None;
+        Layout(parentWindowWidth, parentWindowHeight, numericValue);
+    }
+
+    void OnMouseMove(float x, float y)
+    {
+        m_okButton.OnMouseMove(x, y);
+        m_cancelButton.OnMouseMove(x, y);
+    }
+
+    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    {
+        if (m_cancelButton.IsHighlighted())
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::Cancel;
+            return;
+        }
+
+        if (m_okButton.IsHighlighted())
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::OK;
+            return;
+        }
+
+        m_textBox.OnMouseClick(x, y);
+    }
+
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    {
+        if (key == 13) // Enter
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::OK;
+            return;
+        }
+
+        if (key == 27) // Escape
+        {
+            *pCloseDialog = true;
+            m_dialogResult = DialogResult::Cancel;
+            return;
+        }
+
+        if (m_textBox.IsFocused())
+        {
+            m_textBox.OnKeyboardInput(key);
+            return;
+        }
+    }
+
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    {
+        DrawBlankWindow(renderer, uiColor);
+        m_textBox.Draw(renderer, uiColor);
+        m_okButton.Draw(renderer, uiColor);
+        m_cancelButton.Draw(renderer, uiColor);
+    }
+
+    DialogResult GetDialogResult() const
+    {
+        return m_dialogResult;
+    }
+
+    int GetRequestedValue()
+    {
+        int value = m_textBox.GetTextFieldNumericValue();
+        return value;
+    }
+
+private:
+
+    void Layout(int parentWindowWidth, int parentWindowHeight, int numericValue)
+    {
+        // Size chosen based on the baked-in choice of elements on the dialog
+        int dialogWidth = 300;
+        int dialogHeight = 260;
+
+        // Center the dialog
+        m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));
+        m_dialogRect.y = static_cast<float>((parentWindowHeight / 2) - (dialogHeight / 2));
+
+        m_dialogRect.w = static_cast<float>(dialogWidth);
+        m_dialogRect.h = static_cast<float>(dialogHeight);
+
+        // Center the menubar text
+        LayoutCommon(m_dialogRect.w);
+
+        float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+        float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
+
+        m_textBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Radius:", numericValue, LabelledTextBox::FormatMode::Decimal5Digits);
+        layoutY += hackforge::sc_dialogbox_margin;
+        layoutY += hackforge::sc_dialogbox_margin;
+
+        m_okButton.Layout(&layoutX, &layoutY, "OK", hackforge::sc_dialogbox_margin);
+        layoutX += hackforge::sc_dialogbox_tabStop;
+        m_cancelButton.Layout(&layoutX, &layoutY, "Cancel", hackforge::sc_dialogbox_margin);
+    }
+};
+
 class SizeInputDialogBox : public DialogBoxCommon
 {
     LabelledTextBox m_widthTextBox;

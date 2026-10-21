@@ -19,7 +19,14 @@ public:
         m_indices.push_back(3);
     }
 
-    void Render(SDL_Renderer* renderer, float previousPenX, float previousPenY, float currentPenX, float currentPenY, SDL_Color const& penColor)
+    void Render(
+        SDL_Renderer* renderer, 
+        float previousPenX, 
+        float previousPenY, 
+        float currentPenX, 
+        float currentPenY, 
+        SDL_Color const& penColor,
+        int penRadius)
     {
         EnsureIndices();
 
@@ -27,29 +34,29 @@ public:
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX - 10;
-            v.position.y = previousPenY - 10;
+            v.position.x = previousPenX - penRadius;
+            v.position.y = previousPenY - penRadius;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX + 10;
-            v.position.y = previousPenY + 10;
+            v.position.x = previousPenX + penRadius;
+            v.position.y = previousPenY + penRadius;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX + 10;
-            v.position.y = currentPenY + 10;
+            v.position.x = currentPenX + penRadius;
+            v.position.y = currentPenY + penRadius;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX - 10;
-            v.position.y = currentPenY - 10;
+            v.position.x = currentPenX - penRadius;
+            v.position.y = currentPenY - penRadius;
             vertices.push_back(v);
         }
 
