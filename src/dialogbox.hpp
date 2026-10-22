@@ -306,6 +306,7 @@ public:
         SetPenColor,
         SetUIColor,
         SetPenRadius,
+        SetPenAngle,
         NewDocument,
         Resize
     };
@@ -541,12 +542,15 @@ class SingleNumberInputDialogBox : public DialogBoxCommon
     Button m_okButton;
     Button m_cancelButton;
     DialogResult m_dialogResult;
+    int m_minValue;
+    int m_maxValue;
 
 public:
-    SingleNumberInputDialogBox(DialogType type, const char* label, int parentWindowWidth, int parentWindowHeight, int numericValue) : DialogBoxCommon(type, label)
+    SingleNumberInputDialogBox(DialogType type, const char* label, const char* valueLabel, int parentWindowWidth, int parentWindowHeight, int numericValue) 
+        : DialogBoxCommon(type, label)
     {
         m_dialogResult = DialogResult::None;
-        Layout(parentWindowWidth, parentWindowHeight, numericValue);
+        Layout(parentWindowWidth, parentWindowHeight, numericValue, valueLabel);
     }
 
     void OnMouseMove(float x, float y, bool) override
@@ -618,7 +622,7 @@ public:
 
 private:
 
-    void Layout(int parentWindowWidth, int parentWindowHeight, int numericValue)
+    void Layout(int parentWindowWidth, int parentWindowHeight, int numericValue, const char* valueLabel)
     {
         // Size chosen based on the baked-in choice of elements on the dialog
         int dialogWidth = 300;
@@ -637,7 +641,7 @@ private:
         float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
 
-        m_textBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Radius:", numericValue, LabelledTextBox::FormatMode::Decimal5Digits);
+        m_textBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, valueLabel, numericValue, LabelledTextBox::FormatMode::Decimal5Digits);
         layoutY += hackforge::sc_dialogbox_margin;
         layoutY += hackforge::sc_dialogbox_margin;
 

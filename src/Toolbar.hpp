@@ -17,12 +17,24 @@ enum class Tool
     Eyedropper
 };
 
+namespace ToolAttributes
+{
+    enum ToolAttributesType
+    {
+        None = 0x0,
+        Colour = 0x1,
+        Radius = 0x2,
+        Angle = 0x4
+    };
+}
+
 void OnToolbarNew();
 void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
 void OnToolbarSetPenRadius();
+void OnToolbarSetPenAngle();
 void OnToolbarSetUIColor();
 void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
@@ -108,6 +120,8 @@ protected:
 class ChildMenuItem : public MenuItem {
 
 public:
+  bool m_enabled;
+
   void (*m_fn)();
 
   ChildMenuItem() : m_fn(nullptr) {
@@ -134,6 +148,13 @@ class TopLevelMenuItem : public MenuItem {
 
 public:
   TopLevelMenuItem() : m_longestLabelLength(0) {
+  }
+
+  void ClearItems()
+  {
+      m_childMenuItems.clear();
+      m_longestLabelLength = 0;
+      m_expandedBoxWidth = 0;
   }
 
   void AddChildMenuItem(std::string label, float x, void (*fn)()) {
@@ -213,6 +234,10 @@ public:
     return m_bounds.w;
   }
 
+  float GetLeft() const {
+      return m_bounds.x;
+  }
+
   size_t GetNumChildMenuItems() const {
     return m_childMenuItems.size();
   }
@@ -268,12 +293,9 @@ public:
     {
         TopLevelMenuItem attributes;
         attributes.SetLabel("Attributes");
-        attributes.AddChildMenuItem(
-            "Pen Colour",
-            x, OnToolbarSetPenColor);
-        attributes.AddChildMenuItem(
-            "Pen Radius",
-            x, OnToolbarSetPenRadius);
+        attributes.AddChildMenuItem("Pen Colour", x, OnToolbarSetPenColor);
+        attributes.AddChildMenuItem("Pen Radius", x, OnToolbarSetPenRadius);
+        attributes.AddChildMenuItem("Pen Angle", x, OnToolbarSetPenRadius);
         attributes.FinishLayout(x);
         float toolbarWidth = attributes.GetWidth();
         m_toolbarItems.push_back(attributes);
@@ -378,6 +400,32 @@ public:
           m_toolbarItems[toolbarIndex].SetChildMenuItemCheckedState(i, checkedState);
       }
   }
+
+  void EnableToolAttributes(int attribs)
+  {
+      TopLevelMenuItem& attribMenuItem = m_toolbarItems[2];
+      float x = attribMenuItem.GetLeft();
+
+      attribMenuItem.ClearItems();
+
+      if (attribs & ToolAttributes::Colour)
+      {
+          attribMenuItem.AddChildMenuItem("Pen Colour", x, OnToolbarSetPenColor);
+      }
+
+      if (attribs & ToolAttributes::Radius)
+      {
+          attribMenuItem.AddChildMenuItem("Pen Radius", x, OnToolbarSetPenRadius);
+      }
+
+      if (attribs & ToolAttributes::Angle)
+      {
+          attribMenuItem.AddChildMenuItem("Pen Angle", x, OnToolbarSetPenAngle);
+      }
+
+      attribMenuItem.FinishLayout(x);
+  }
+
 };
 
 } // namespace hackforge

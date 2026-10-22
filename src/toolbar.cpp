@@ -45,9 +45,20 @@ void OnToolbarSetPenRadius() {
     hackforge::dialogs.emplace_back(std::make_unique<SingleNumberInputDialogBox>(
         DialogBoxCommon::DialogType::SetPenRadius,
         "Set Radius",
+        "Radius:",
         hackforge::window_width,
         hackforge::window_height,
         hackforge::penRadius));
+}
+
+void OnToolbarSetPenAngle() {
+    hackforge::dialogs.emplace_back(std::make_unique<SingleNumberInputDialogBox>(
+        DialogBoxCommon::DialogType::SetPenAngle,
+        "Set Angle",
+        "Angle:",
+        hackforge::window_width,
+        hackforge::window_height,
+        hackforge::penAngle));
 }
 
 void OnToolbarSetUIColor() {
@@ -62,27 +73,32 @@ void OnToolbarSetUIColor() {
 void OnToolbarSetPencilTool() {
     hackforge::currentTool = Tool::Pencil;
     hackforge::toolbar.CheckItemAndUncheckOthers(1, 0);
+    hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour);
 }
 
 void OnToolbarSetStampTool() {
   hackforge::currentTool = Tool::Stamp;
   hackforge::toolbar.CheckItemAndUncheckOthers(1, 1);
+  hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour | ToolAttributes::Radius);
 }
 
 void OnToolbarSetAnglePenTool() {
   hackforge::currentTool = Tool::AnglePen;
   hackforge::toolbar.CheckItemAndUncheckOthers(1, 2);
+  hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour | ToolAttributes::Radius | ToolAttributes::Angle);
 }
 
 void OnToolbarSetPaintBucketTool() {
   hackforge::currentTool = hackforge::Tool::PaintBucket;
   hackforge::toolbar.CheckItemAndUncheckOthers(1, 3);
+  hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour);
 }
 
 void OnToolbarSetEyedropperTool()
 {
     hackforge::currentTool = hackforge::Tool::Eyedropper;
     hackforge::toolbar.CheckItemAndUncheckOthers(1, 4);
+    hackforge::toolbar.EnableToolAttributes(ToolAttributes::None);
 }
 
 void OnToolbarAbout()

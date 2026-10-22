@@ -26,37 +26,43 @@ public:
         float currentPenX, 
         float currentPenY, 
         SDL_Color const& penColor,
-        int penRadius)
+        int penRadius,
+        int penAngle)
     {
         EnsureIndices();
+
+        const float pi = 3.14159f;
+        float radians = static_cast<float>(penAngle) * (pi / 180.0f);
+        float x = cosf(radians) * static_cast<float>(penRadius);
+        float y = -sinf(radians) * static_cast<float>(penRadius);
 
         std::vector<SDL_Vertex> vertices;
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX - penRadius;
-            v.position.y = previousPenY - penRadius;
+            v.position.x = previousPenX - x;
+            v.position.y = previousPenY - y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX + penRadius;
-            v.position.y = previousPenY + penRadius;
+            v.position.x = previousPenX + x;
+            v.position.y = previousPenY + y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX + penRadius;
-            v.position.y = currentPenY + penRadius;
+            v.position.x = currentPenX + x;
+            v.position.y = currentPenY + y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX - penRadius;
-            v.position.y = currentPenY - penRadius;
+            v.position.x = currentPenX - x;
+            v.position.y = currentPenY - y;
             vertices.push_back(v);
         }
 

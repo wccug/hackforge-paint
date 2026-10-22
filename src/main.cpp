@@ -56,7 +56,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
     AllocateScreenDoorTexture(hackforge::renderer);
 
-    hackforge::currentTool = hackforge::Tool::Pencil;
+    hackforge::OnToolbarSetPencilTool();
 
     return SDL_APP_CONTINUE;
 }
@@ -237,6 +237,57 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     hackforge::window_height = newHeight;
 }
 
+void OnConfirmSetPenRadius(int requestedRadius)
+{
+    if (hackforge::penRadius == requestedRadius)
+    {
+        // Nothing to do
+        hackforge::dialogs.pop_back();
+        return;
+    }
+
+    if (requestedRadius < 1 || requestedRadius > 200)
+    {
+        std::string errorText = "Please choose a radius between 1 and 200, inclusive.";
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
+    }
+
+    // Can go ahead, user's chosen size works
+    hackforge::dialogs.pop_back();
+    hackforge::penRadius = requestedRadius;
+}
+
+void OnConfirmSetPenAngle(int requestedAngle)
+{
+    if (hackforge::penAngle == requestedAngle)
+    {
+        // Nothing to do
+        hackforge::dialogs.pop_back();
+        return;
+    }
+
+    if (requestedAngle < 0 || requestedAngle > 180)
+    {
+        std::string errorText = "Please choose a radius between 0 and 180, inclusive.";
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
+    }
+
+    // Can go ahead, user's chosen size works
+    hackforge::dialogs.pop_back();
+    hackforge::penAngle = requestedAngle;
+}
 
 void OnTryToCloseFrontmostDialog()
 {
@@ -256,8 +307,13 @@ void OnTryToCloseFrontmostDialog()
 
     if (type == DialogBoxCommon::DialogType::SetPenRadius)
     {
-        hackforge::penRadius = dynamic_cast<SingleNumberInputDialogBox*>(hackforge::dialogs.back().get())->GetRequestedValue();
-        hackforge::dialogs.pop_back();
+        int requestedRadius = dynamic_cast<SingleNumberInputDialogBox*>(hackforge::dialogs.back().get())->GetRequestedValue();
+        OnConfirmSetPenRadius(requestedRadius);
+    }
+    else if (type == DialogBoxCommon::DialogType::SetPenAngle)
+    {
+        int requestedAngle = dynamic_cast<SingleNumberInputDialogBox*>(hackforge::dialogs.back().get())->GetRequestedValue();
+        OnConfirmSetPenAngle(requestedAngle);
     }
     else if (type == DialogBoxCommon::DialogType::SetPenColor)
     {
@@ -485,7 +541,8 @@ SDL_AppResult SDL_AppIterate(void* appstate)
                 hackforge::currentPenX, 
                 hackforge::currentPenY, 
                 hackforge::penColor,
-                hackforge::penRadius);
+                hackforge::penRadius,
+                hackforge::penAngle);
         }
         else if (hackforge::currentTool == hackforge::Tool::PaintBucket)
         {

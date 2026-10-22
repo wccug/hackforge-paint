@@ -30,6 +30,7 @@ inline bool doVerticalFlip = false;
 // --- State variables for the Custom Tooling colors ---
 inline SDL_Color penColor = {255, 255, 255, 255}; // Default Pen: White
 inline int penRadius = 10;
+inline int penAngle = 45;
 inline SDL_Color buttonColor = {100, 100, 100,
                                 255}; // Default Button Background: Dark Gray
 
