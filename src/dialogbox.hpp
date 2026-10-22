@@ -300,16 +300,35 @@ public:
 class DialogBoxCommon
 {
 public:
-    std::string m_dialogTitle;
-    float m_menubarTextX;
-    SDL_FRect m_dialogRect;
-
-    DialogBoxCommon(const char* label)
+    enum class DialogType
     {
+        Info,
+        SetPenColor,
+        SetUIColor,
+        SetPenRadius,
+        NewDocument,
+        Resize
+    };
+
+    DialogBoxCommon(DialogType type, const char* label)
+    {
+        m_type = type;
         m_dialogTitle = label;
     }
 
+    DialogType GetType() const { return m_type; }
+
+    virtual void OnMouseMove(float x, float y, bool mouseButtonDown) = 0;
+    virtual void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) = 0;
+    virtual void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) = 0;
+    virtual void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) = 0;
+    virtual DialogResult GetDialogResult() const = 0;
+
 protected:
+    DialogType m_type;
+    std::string m_dialogTitle;
+    float m_menubarTextX;
+    SDL_FRect m_dialogRect;
 
     void LayoutCommon(float dialogRectWidth)
     {
@@ -369,7 +388,7 @@ class InfoDialogBox : public DialogBoxCommon
 public:
 
     InfoDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, const char* infoText, int lineLength)
-        : DialogBoxCommon(dialogTitle)
+        : DialogBoxCommon(DialogBoxCommon::DialogType::Info, dialogTitle)
     {
         m_text = SetStringWithLineBreaks(infoText, lineLength);
         Layout(parentWindowWidth, parentWindowHeight);
@@ -439,13 +458,13 @@ public:
         return result;
     }
 
-    void OnMouseMove(float x, float y)
+    void OnMouseMove(float x, float y, bool) override
     {
         m_okButton.OnMouseMove(x, y);
     }
 
 
-    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
     {
         if (m_okButton.IsHighlighted())
         {
@@ -453,7 +472,7 @@ public:
         }
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
     {
         if (key == 13 || key == 27) // Enter or escape
         {
@@ -462,7 +481,7 @@ public:
         }
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
 
@@ -482,6 +501,11 @@ public:
         }
 
         m_okButton.Draw(renderer, uiColor);
+    }
+
+    DialogResult GetDialogResult() const override
+    {
+        return DialogResult::OK;
     }
 
 private:
@@ -519,19 +543,19 @@ class SingleNumberInputDialogBox : public DialogBoxCommon
     DialogResult m_dialogResult;
 
 public:
-    SingleNumberInputDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, int numericValue) : DialogBoxCommon(label)
+    SingleNumberInputDialogBox(DialogType type, const char* label, int parentWindowWidth, int parentWindowHeight, int numericValue) : DialogBoxCommon(type, label)
     {
         m_dialogResult = DialogResult::None;
         Layout(parentWindowWidth, parentWindowHeight, numericValue);
     }
 
-    void OnMouseMove(float x, float y)
+    void OnMouseMove(float x, float y, bool) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
     {
         if (m_cancelButton.IsHighlighted())
         {
@@ -550,7 +574,7 @@ public:
         m_textBox.OnMouseClick(x, y);
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
     {
         if (key == 13) // Enter
         {
@@ -573,7 +597,7 @@ public:
         }
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
         m_textBox.Draw(renderer, uiColor);
@@ -581,7 +605,7 @@ public:
         m_cancelButton.Draw(renderer, uiColor);
     }
 
-    DialogResult GetDialogResult() const
+    DialogResult GetDialogResult() const override
     {
         return m_dialogResult;
     }
@@ -633,28 +657,19 @@ class SizeInputDialogBox : public DialogBoxCommon
 
 public:
 
-    enum class Mode
-    {
-        NewDocument,
-        Resize
-    };
-
-    SizeInputDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, Mode mode) : DialogBoxCommon(label)
+    SizeInputDialogBox(DialogType type, const char* label, int parentWindowWidth, int parentWindowHeight) : DialogBoxCommon(type, label)
     {
         m_dialogResult = DialogResult::None;
-        m_mode = mode;
         Layout(parentWindowWidth, parentWindowHeight);
     }
 
-    Mode GetMode() const { return m_mode; }
-
-    void OnMouseMove(float x, float y)
+    void OnMouseMove(float x, float y, bool) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
     {
         if (m_cancelButton.IsHighlighted())
         {
@@ -674,7 +689,7 @@ public:
         m_heightTextBox.OnMouseClick(x, y);
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
     {
         if (key == 9) // tab
         {
@@ -718,7 +733,7 @@ public:
         }
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
         m_widthTextBox.Draw(renderer, uiColor);
@@ -727,7 +742,7 @@ public:
         m_cancelButton.Draw(renderer, uiColor);
     }
 
-    DialogResult GetDialogResult() const
+    DialogResult GetDialogResult() const override
     {
         return m_dialogResult;
     }
@@ -745,8 +760,6 @@ public:
     }
 
 private:
-
-    Mode m_mode;
 
     void Layout(int parentWindowWidth, int parentWindowHeight)
     {

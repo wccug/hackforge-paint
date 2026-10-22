@@ -17,11 +17,11 @@ void OnToolbarQuickSave() {
 }
 void OnToolbarSetCanvasSize()
 {
-    hackforge::sizeInputDialog.reset(new SizeInputDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<SizeInputDialogBox>(
+        DialogBoxCommon::DialogType::Resize,
         "Set Canvas Size",
         hackforge::window_width,
-        hackforge::window_height,
-        SizeInputDialogBox::Mode::Resize));
+        hackforge::window_height));
 }
 
 void OnToolbarHorizontalFlip() {
@@ -33,16 +33,17 @@ void OnToolbarVerticalFlip() {
 }
 
 void OnToolbarSetPenColor() {
-    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<ColorPickerDialogBox>(
+        DialogBoxCommon::DialogType::SetPenColor,
         "Set Colour",
         hackforge::window_width,
         hackforge::window_height,
-        ColorPickerDialogBox::Mode::SetPenColor,
         hackforge::penColor));
 }
 
 void OnToolbarSetPenRadius() {
-    hackforge::penRadiusDialog.reset(new SingleNumberInputDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<SingleNumberInputDialogBox>(
+        DialogBoxCommon::DialogType::SetPenRadius,
         "Set Radius",
         hackforge::window_width,
         hackforge::window_height,
@@ -50,11 +51,11 @@ void OnToolbarSetPenRadius() {
 }
 
 void OnToolbarSetUIColor() {
-    hackforge::colorPickerDialog.reset(new ColorPickerDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<ColorPickerDialogBox>(
+        DialogBoxCommon::DialogType::SetUIColor,
         "Set Colour",
         hackforge::window_width,
         hackforge::window_height,
-        ColorPickerDialogBox::Mode::SetUIColor,
         hackforge::buttonColor));
 }
 
@@ -86,7 +87,7 @@ void OnToolbarSetEyedropperTool()
 
 void OnToolbarAbout()
 {
-    hackforge::infoDialog.reset(new InfoDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
         "Information",
         hackforge::window_width,
         hackforge::window_height,

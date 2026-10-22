@@ -33,14 +33,8 @@ class ColorPickerDialogBox : public DialogBoxCommon
 
 public:
 
-    enum class Mode
-    {
-        SetPenColor,
-        SetUIColor
-    };
-
-    ColorPickerDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, Mode mode, SDL_Color selectedColor)
-        : DialogBoxCommon(dialogTitle), m_mode(mode), m_selectedColor(selectedColor)
+    ColorPickerDialogBox(DialogType dialogType, const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, SDL_Color selectedColor)
+        : DialogBoxCommon(dialogType, dialogTitle), m_selectedColor(selectedColor)
     {
         Layout(parentWindowWidth, parentWindowHeight);
 
@@ -55,14 +49,12 @@ public:
 
     SDL_Color GetRequestedColor() const { return m_selectedColor; }
 
-    Mode GetMode() const { return m_mode; }
-
-    DialogResult GetDialogResult() const
+    DialogResult GetDialogResult() const override
     {
         return m_dialogResult;
     }
 
-    void OnMouseMove(float x, float y, bool mouseButtonDown)
+    void OnMouseMove(float x, float y, bool mouseButtonDown) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
@@ -85,7 +77,7 @@ public:
         }
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog)
+    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
     {
         if (m_okButton.IsHighlighted())
         {
@@ -121,7 +113,7 @@ public:
         m_hexColorTextBox.OnMouseClick(x, y);
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
     {
         if (key == 13) // Enter
         {
@@ -155,7 +147,7 @@ public:
         }
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
 
@@ -468,8 +460,6 @@ private:
         int rgbValue = (m_selectedColor.r << 16) | (m_selectedColor.g << 8) | m_selectedColor.b;
         m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
     }
-
-    Mode m_mode;
 };
 
 #endif
