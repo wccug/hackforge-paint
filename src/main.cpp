@@ -15,11 +15,11 @@
 
 void NewDocument()
 {
-    hackforge::sizeInputDialog.reset(new SizeInputDialogBox(
+    hackforge::dialogs.emplace_back(std::make_unique<SizeInputDialogBox>(
+        DialogBoxCommon::DialogType::NewDocument,
         "New Document",
         hackforge::sc_default_canvas_width,
-        hackforge::sc_default_canvas_height,
-        SizeInputDialogBox::Mode::NewDocument));
+        hackforge::sc_default_canvas_height));
 }
 
 void AllocateScreenDoorTexture(SDL_Renderer* renderer) 
@@ -38,6 +38,28 @@ void AllocateScreenDoorTexture(SDL_Renderer* renderer)
     SDL_UpdateTexture(hackforge::screenDoor, NULL, pixels, 2 * sizeof(Uint32));
 }
 
+void CreateWindowSizeDependentResources(SDL_Texture* pNewCanvas = nullptr) // new canvas may be externally created
+{
+    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+    if (pNewCanvas)
+    {
+        hackforge::canvas = pNewCanvas;
+    }
+    else
+    {
+        hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+    }
+
+    hackforge::undoBuffer = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+    hackforge::scratchBuffer = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+}
+
+void DestroyWindowSizeDependentResources()
+{
+    SDL_DestroyTexture(hackforge::canvas);
+    SDL_DestroyTexture(hackforge::undoBuffer);
+    SDL_DestroyTexture(hackforge::scratchBuffer);
+}
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
@@ -51,33 +73,22 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     // Initialize the canvas target background color to Black once at startup
     hackforge::shouldClear = true;
+    hackforge::shouldShowDemoMessageOnClear = true;
 
-    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
-    hackforge::canvas = SDL_CreateTexture(hackforge::renderer, pixel_format, SDL_TEXTUREACCESS_TARGET, hackforge::window_width, hackforge::window_height);
+    CreateWindowSizeDependentResources();
+
     AllocateScreenDoorTexture(hackforge::renderer);
 
-    hackforge::currentTool = hackforge::Tool::Pencil;
+    hackforge::OnToolbarSetPencilTool();
 
     return SDL_APP_CONTINUE;
 }
 
 void OnMouseMove(SDL_Event* event)
 {
-    if (hackforge::colorPickerDialog)
+    if (hackforge::dialogs.size() > 0)
     {
-        hackforge::colorPickerDialog->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
-        return;
-    }
-
-    if (hackforge::infoDialog)
-    {
-        hackforge::infoDialog->OnMouseMove(event->motion.x, event->motion.y);
-        return;
-    }
-
-    if (hackforge::sizeInputDialog)
-    {
-        hackforge::sizeInputDialog->OnMouseMove(event->motion.x, event->motion.y);
+        hackforge::dialogs.back()->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
         return;
     }
 
@@ -159,12 +170,13 @@ private:
 
 void OnConfirmSetCanvasSizeDialog_NewDocument(int newWidth, int newHeight)
 {
-    // Validate the requested width and height are acceptable. Pop up a  dialog box if not.
+    // Validate the requested width and height are acceptable. Pop up an additional dialog box if not.
     SizeInputDialogValidation sidv(newWidth, newHeight);
     if (!sidv.IsValid())
     {
         std::string errorText = sidv.GetErrorText().str();
-        hackforge::infoDialog.reset(new InfoDialogBox(
+
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -173,7 +185,7 @@ void OnConfirmSetCanvasSizeDialog_NewDocument(int newWidth, int newHeight)
         return;
     }
 
-    hackforge::sizeInputDialog.reset();
+    hackforge::dialogs.pop_back(); // Delete the size input dialog
 
     hackforge::window_width = newWidth;
     hackforge::window_height = newHeight;
@@ -181,15 +193,11 @@ void OnConfirmSetCanvasSizeDialog_NewDocument(int newWidth, int newHeight)
     SDL_SetWindowSize(hackforge::window, hackforge::window_width, hackforge::window_height);
     SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
 
-    SDL_DestroyTexture(hackforge::canvas);
-    hackforge::canvas = SDL_CreateTexture(
-        hackforge::renderer,
-        pixel_format,
-        SDL_TEXTUREACCESS_TARGET,
-        hackforge::window_width,
-        hackforge::window_height);
+    DestroyWindowSizeDependentResources();
+    CreateWindowSizeDependentResources();
 
     hackforge::shouldClear = true;
+    hackforge::shouldShowDemoMessageOnClear = false;
 }
 
 void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
@@ -197,7 +205,7 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     if (newWidth == hackforge::window_width && newHeight == hackforge::window_height)
     {
         // No change, nothing to do
-        hackforge::sizeInputDialog.reset();
+        hackforge::dialogs.pop_back();
         return;
     }
 
@@ -206,7 +214,7 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     if (!sidv.IsValid())
     {
         std::string errorText = sidv.GetErrorText().str();
-        hackforge::infoDialog.reset(new InfoDialogBox(
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -215,7 +223,8 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
         return;
     }
 
-    hackforge::sizeInputDialog.reset();
+    // Can go ahead, user's chosen size works
+    hackforge::dialogs.pop_back();
 
     SDL_SetWindowSize(hackforge::window, newWidth, newHeight);
 
@@ -230,12 +239,13 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
 
         SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, &dstRect);
     }
-    SDL_DestroyTexture(hackforge::canvas);
-    hackforge::canvas = newCanvas;
+    
+    DestroyWindowSizeDependentResources();
+    CreateWindowSizeDependentResources(newCanvas);
 
     if (newWidth < hackforge::window_width || newHeight < hackforge::window_height)
     {
-        hackforge::infoDialog.reset(new InfoDialogBox(
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             "Information",
             newWidth,
             newHeight,
@@ -247,122 +257,139 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     hackforge::window_height = newHeight;
 }
 
-
-
-void OnCloseSetCanvasSizeDialog()
+void OnConfirmSetPenRadius(int requestedRadius)
 {
-    DialogResult result = hackforge::sizeInputDialog->GetDialogResult();
-    int newWidth = hackforge::sizeInputDialog->GetRequestedCanvasWidth();
-    int newHeight = hackforge::sizeInputDialog->GetRequestedCanvasHeight();
-    SizeInputDialogBox::Mode mode = hackforge::sizeInputDialog->GetMode();
-
-    if (result == DialogResult::Cancel)
+    if (hackforge::penRadius == requestedRadius)
     {
-        hackforge::sizeInputDialog.reset();
+        // Nothing to do
+        hackforge::dialogs.pop_back();
         return;
     }
 
-    if (mode == SizeInputDialogBox::Mode::Resize)
+    if (requestedRadius < 1 || requestedRadius > 200)
     {
-        OnConfirmSetCanvasSizeDialog_Resize(newWidth, newHeight);
+        std::string errorText = "Please choose a radius between 1 and 200, inclusive.";
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
     }
-    else if (mode == SizeInputDialogBox::Mode::NewDocument)
-    {
-        OnConfirmSetCanvasSizeDialog_NewDocument(newWidth, newHeight);
-    }
+
+    // Can go ahead, user's chosen size works
+    hackforge::dialogs.pop_back();
+    hackforge::penRadius = requestedRadius;
 }
 
-void OnCloseColorPickerDialog()
+void OnConfirmSetPenAngle(int requestedAngle)
 {
-    DialogResult result = hackforge::colorPickerDialog->GetDialogResult();
-    SDL_Color newColor = hackforge::colorPickerDialog->GetRequestedColor();
-    ColorPickerDialogBox::Mode mode = hackforge::colorPickerDialog->GetMode();
-    hackforge::colorPickerDialog.reset();
-
-    if (result == DialogResult::Cancel)
+    if (hackforge::penAngle == requestedAngle)
     {
+        // Nothing to do
+        hackforge::dialogs.pop_back();
         return;
     }
 
-    if (mode == ColorPickerDialogBox::Mode::SetPenColor)
+    if (requestedAngle < 0 || requestedAngle > 180)
     {
-        hackforge::penColor = newColor;
+        std::string errorText = "Please choose a radius between 0 and 180, inclusive.";
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
     }
-    else if (mode == ColorPickerDialogBox::Mode::SetUIColor)
+
+    // Can go ahead, user's chosen size works
+    hackforge::dialogs.pop_back();
+    hackforge::penAngle = requestedAngle;
+}
+
+void OnTryToCloseFrontmostDialog()
+{
+    DialogBoxCommon::DialogType type = hackforge::dialogs.back()->GetType();
+    if (type == DialogBoxCommon::DialogType::Info)
     {
-        hackforge::buttonColor = newColor;
+        hackforge::dialogs.pop_back();
+        return;
     }
+
+    DialogResult result = hackforge::dialogs.back()->GetDialogResult();
+    if (result == DialogResult::Cancel)
+    {
+        hackforge::dialogs.pop_back();
+        return;
+    }
+
+    if (type == DialogBoxCommon::DialogType::SetPenRadius)
+    {
+        int requestedRadius = dynamic_cast<SingleNumberInputDialogBox*>(hackforge::dialogs.back().get())->GetRequestedValue();
+        OnConfirmSetPenRadius(requestedRadius);
+    }
+    else if (type == DialogBoxCommon::DialogType::SetPenAngle)
+    {
+        int requestedAngle = dynamic_cast<SingleNumberInputDialogBox*>(hackforge::dialogs.back().get())->GetRequestedValue();
+        OnConfirmSetPenAngle(requestedAngle);
+    }
+    else if (type == DialogBoxCommon::DialogType::SetPenColor)
+    {
+        hackforge::penColor = dynamic_cast<ColorPickerDialogBox*>(hackforge::dialogs.back().get())->GetRequestedColor();
+        hackforge::dialogs.pop_back();
+
+    }
+    else if (type == DialogBoxCommon::DialogType::SetUIColor)
+    {
+        hackforge::buttonColor = dynamic_cast<ColorPickerDialogBox*>(hackforge::dialogs.back().get())->GetRequestedColor();
+        hackforge::dialogs.pop_back();
+    }
+    else if (type == DialogBoxCommon::DialogType::NewDocument)
+    {
+        SizeInputDialogBox* pSizeInput = dynamic_cast<SizeInputDialogBox*>(hackforge::dialogs.back().get());
+        OnConfirmSetCanvasSizeDialog_NewDocument(pSizeInput->GetRequestedCanvasWidth(), pSizeInput->GetRequestedCanvasHeight());
+    }
+    else if (type == DialogBoxCommon::DialogType::Resize)
+    {
+        SizeInputDialogBox* pSizeInput = dynamic_cast<SizeInputDialogBox*>(hackforge::dialogs.back().get());
+        OnConfirmSetCanvasSizeDialog_Resize(pSizeInput->GetRequestedCanvasWidth(), pSizeInput->GetRequestedCanvasHeight());
+    }
+
 }
 
 void OnKeyboardInput(SDL_Event* event)
 {
-    if (hackforge::colorPickerDialog)
+    if (hackforge::dialogs.size() > 0)
     {
-        bool closeDialog = false;
-        hackforge::colorPickerDialog->OnKeyboardInput(event->key.key, &closeDialog);
-        if (closeDialog)
+        bool tryToCloseDialog = false;
+        hackforge::dialogs.back()->OnKeyboardInput(event->key.key, &tryToCloseDialog);
+
+        if (tryToCloseDialog)
         {
-            OnCloseColorPickerDialog();
+            OnTryToCloseFrontmostDialog();
         }
         return;
     }
 
-    if (hackforge::infoDialog)
+    // Look for Ctrl+Z to undo
+    if (event->key.key == SDLK_Z && event->key.key & SDL_KMOD_CTRL)
     {
-        bool closeDialog = false;
-        hackforge::infoDialog->OnKeyboardInput(event->key.key, &closeDialog);
-        if (closeDialog)
-        {
-            hackforge::infoDialog.reset();
-        }
-        return;
-    }
-
-    if (hackforge::sizeInputDialog)
-    {
-        bool closeDialog = false;
-        hackforge::sizeInputDialog->OnKeyboardInput(event->key.key, &closeDialog);
-        if (closeDialog)
-        {
-            OnCloseSetCanvasSizeDialog();
-        }
-        return;
+        hackforge::doUndo = true;
     }
 }
 
 void OnMouseLeftClick(SDL_Event* event)
 {
-    if (hackforge::colorPickerDialog)
+    if (hackforge::dialogs.size() > 0)
     {
-        bool closeDialog = false;
-        hackforge::colorPickerDialog->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &closeDialog);
+        bool tryToCloseDialog = false;
+        hackforge::dialogs.back()->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &tryToCloseDialog);
 
-        if (closeDialog)
+        if (tryToCloseDialog)
         {
-            OnCloseColorPickerDialog();
-        }
-        return;
-    }
-
-    if (hackforge::infoDialog)
-    {
-        bool closeDialog = false;
-        hackforge::infoDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
-
-        if (closeDialog)
-        {
-            hackforge::infoDialog.reset();
-        }
-        return;
-    }
-    if (hackforge::sizeInputDialog)
-    {
-        bool closeDialog = false;
-        hackforge::sizeInputDialog->OnMouseClick(event->button.x, event->button.y, &closeDialog);
-
-        if (closeDialog)
-        {
-            OnCloseSetCanvasSizeDialog();
+            OnTryToCloseFrontmostDialog();
         }
         return;
     }
@@ -375,6 +402,11 @@ void OnMouseLeftClick(SDL_Event* event)
     float mx = event->button.x;
     float my = event->button.y;
 
+    if (!hackforge::penDown)
+    {
+        hackforge::onPenDownChange = true;
+    }
+
     hackforge::penDown = true;
 }
 
@@ -385,6 +417,7 @@ void ClearImpl()
     SDL_RenderClear(hackforge::renderer);
 
     // Draw original project demo test message (Centered)
+    if (hackforge::shouldShowDemoMessageOnClear)
     {
         const std::string message = "Hello, Hackforge Paint!";
         int w = 0, h = 0;
@@ -458,6 +491,34 @@ void DrawCopyOfCanvasWithFlipMode(SDL_Renderer* renderer, SDL_Texture* canvas, S
     SDL_DestroyTexture(scratch);
 }
 
+void BackupUndoBuffer()
+{
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::undoBuffer);
+    SDL_RenderClear(hackforge::renderer);
+    SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+}
+
+void RestoreUndoBuffer()
+{
+    // Copy canvas to scratch
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::scratchBuffer);
+    SDL_RenderClear(hackforge::renderer);
+    SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
+
+    // Copy undo to canvas
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+    SDL_RenderClear(hackforge::renderer);
+    SDL_RenderTexture(hackforge::renderer, hackforge::undoBuffer, NULL, NULL);
+
+    // Copy scratch to undo
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::undoBuffer);
+    SDL_RenderClear(hackforge::renderer);
+    SDL_RenderTexture(hackforge::renderer, hackforge::scratchBuffer, NULL, NULL);
+
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+}
+
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
@@ -486,7 +547,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         std::stringstream messageBoxText;
         messageBoxText << "File " << filename << " saved.";
 
-        hackforge::infoDialog.reset(new InfoDialogBox(
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -494,49 +555,83 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             28));
     }
 
+    if (hackforge::doUndo)
+    {
+        RestoreUndoBuffer();
+        hackforge::doUndo = false;
+    }
+
     if (hackforge::doHorizontalFlip)
     {
+        BackupUndoBuffer();
         DrawCopyOfCanvasWithFlipMode(hackforge::renderer, hackforge::canvas, SDL_FLIP_HORIZONTAL);
         hackforge::doHorizontalFlip = false;
     }
 
     if (hackforge::doVerticalFlip)
     {
+        BackupUndoBuffer();
         DrawCopyOfCanvasWithFlipMode(hackforge::renderer, hackforge::canvas, SDL_FLIP_VERTICAL);
         hackforge::doVerticalFlip = false;
     }
 
     // --- 1. Canvas Drawing Pass ---
     SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+
+    SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
+
     if (hackforge::penDown)
     {
-        SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
-
-
         if (hackforge::currentTool == hackforge::Tool::Pencil)
         {
+            if (hackforge::onPenDownChange)
+            {
+                BackupUndoBuffer();
+            }
+
             SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
             SDL_RenderLine(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY);
         }
         else if (hackforge::currentTool == hackforge::Tool::Stamp)
         {
+            if (hackforge::onPenDownChange)
+            {
+                BackupUndoBuffer();
+            }
+
+            float radiusF = static_cast<float>(hackforge::penRadius);
+            float diameter = radiusF * 2;
+
             SDL_FRect rect{};
-            rect.x = hackforge::currentPenX;
-            rect.y = hackforge::currentPenY;
-            rect.w = 10.0f;
-            rect.h = 10.0f;
+            rect.x = hackforge::currentPenX - radiusF;
+            rect.y = hackforge::currentPenY - radiusF;
+            rect.w = diameter;
+            rect.h = diameter;
 
             // Use dynamic active pen color chosen from picker
             SDL_SetRenderDrawColor(hackforge::renderer, hackforge::penColor.r, hackforge::penColor.g, hackforge::penColor.b, hackforge::penColor.a);
             SDL_RenderFillRect(hackforge::renderer, &rect);
-
         }
         else if (hackforge::currentTool == hackforge::Tool::AnglePen)
         {
-            hackforge::anglePen.Render(hackforge::renderer, hackforge::previousPenX, hackforge::previousPenY, hackforge::currentPenX, hackforge::currentPenY, hackforge::penColor);
+            if (hackforge::onPenDownChange)
+            {
+                BackupUndoBuffer();
+            }
+
+            hackforge::anglePen.Render(
+                hackforge::renderer,
+                hackforge::previousPenX,
+                hackforge::previousPenY,
+                hackforge::currentPenX,
+                hackforge::currentPenY,
+                hackforge::penColor,
+                hackforge::penRadius,
+                hackforge::penAngle);
         }
         else if (hackforge::currentTool == hackforge::Tool::PaintBucket)
         {
+            BackupUndoBuffer();
             RenderBucket(hackforge::renderer, hackforge::window_width, hackforge::window_height, hackforge::canvas, hackforge::penColor, hackforge::currentPenX, hackforge::currentPenY);
             hackforge::penDown = false;
         }
@@ -549,7 +644,23 @@ SDL_AppResult SDL_AppIterate(void* appstate)
             SDL_DestroySurface(temporaryCpuRead);
             hackforge::penColor = read;
         }
+        else if (hackforge::currentTool == hackforge::Tool::Spraypaint)
+        {
+            if (hackforge::onPenDownChange)
+            {
+                BackupUndoBuffer();
+            }
+
+            hackforge::spraypaint.Render(
+                hackforge::renderer,
+                hackforge::currentPenX,
+                hackforge::currentPenY,
+                hackforge::penColor,
+                hackforge::penRadius);
+        }
     }
+
+    hackforge::onPenDownChange = false;
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---
     SDL_SetRenderTarget(hackforge::renderer, nullptr); // Sets the window as the target
@@ -559,27 +670,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::sizeInputDialog || hackforge::infoDialog || hackforge::colorPickerDialog;
+    bool drawScreenDoor = hackforge::dialogs.size() > 0;
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
     }
 
-    if (hackforge::colorPickerDialog)
+    for (size_t i = 0; i < hackforge::dialogs.size(); ++i)
     {
-        hackforge::colorPickerDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
-    }
-
-    if (hackforge::sizeInputDialog)
-    {
-        hackforge::sizeInputDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
-    }
-
-    // Info dialogs take priority over the resize dialog, so it gets drawn last.
-    if (hackforge::infoDialog)
-    {
-        hackforge::infoDialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
+        hackforge::dialogs[i]->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     SDL_RenderPresent(hackforge::renderer);
