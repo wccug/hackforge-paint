@@ -24,6 +24,10 @@ void OnToolbarSetCanvasSize()
         hackforge::window_height));
 }
 
+void OnToolbarUndo() {
+    hackforge::doUndo = true;
+}
+
 void OnToolbarHorizontalFlip() {
     hackforge::doHorizontalFlip = true;
 }
@@ -99,6 +103,12 @@ void OnToolbarSetEyedropperTool()
     hackforge::currentTool = hackforge::Tool::Eyedropper;
     hackforge::toolbar.CheckItemAndUncheckOthers(1, 4);
     hackforge::toolbar.EnableToolAttributes(ToolAttributes::None);
+}
+
+void OnToolbarSetSpraypaintTool() {
+    hackforge::currentTool = Tool::Spraypaint;
+    hackforge::toolbar.CheckItemAndUncheckOthers(1, 5);
+    hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour | ToolAttributes::Radius);
 }
 
 void OnToolbarAbout()

@@ -14,7 +14,8 @@ enum class Tool
     Stamp,
     AnglePen,
     PaintBucket,
-    Eyedropper
+    Eyedropper,
+    Spraypaint
 };
 
 namespace ToolAttributes
@@ -41,6 +42,8 @@ void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
 void OnToolbarSetEyedropperTool();
+void OnToolbarSetSpraypaintTool();
+void OnToolbarUndo();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
 void OnToolbarSetCanvasSize();
@@ -282,6 +285,7 @@ public:
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
       tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
       tool.AddChildMenuItem("Eyedropper", x, OnToolbarSetEyedropperTool);
+      tool.AddChildMenuItem("Spraypaint", x, OnToolbarSetSpraypaintTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);
@@ -293,9 +297,9 @@ public:
     {
         TopLevelMenuItem attributes;
         attributes.SetLabel("Attributes");
-        attributes.AddChildMenuItem("Pen Colour", x, OnToolbarSetPenColor);
-        attributes.AddChildMenuItem("Pen Radius", x, OnToolbarSetPenRadius);
-        attributes.AddChildMenuItem("Pen Angle", x, OnToolbarSetPenRadius);
+        attributes.AddChildMenuItem("Tool Colour", x, OnToolbarSetPenColor);
+        attributes.AddChildMenuItem("Tool Radius", x, OnToolbarSetPenRadius);
+        attributes.AddChildMenuItem("Tool Angle", x, OnToolbarSetPenRadius);
         attributes.FinishLayout(x);
         float toolbarWidth = attributes.GetWidth();
         m_toolbarItems.push_back(attributes);
@@ -306,6 +310,7 @@ public:
     {
         TopLevelMenuItem effect;
         effect.SetLabel("Effect");
+        effect.AddChildMenuItem("Undo", x, OnToolbarUndo);
         effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
         effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
         effect.FinishLayout(x);
@@ -410,17 +415,17 @@ public:
 
       if (attribs & ToolAttributes::Colour)
       {
-          attribMenuItem.AddChildMenuItem("Pen Colour", x, OnToolbarSetPenColor);
+          attribMenuItem.AddChildMenuItem("Tool Colour", x, OnToolbarSetPenColor);
       }
 
       if (attribs & ToolAttributes::Radius)
       {
-          attribMenuItem.AddChildMenuItem("Pen Radius", x, OnToolbarSetPenRadius);
+          attribMenuItem.AddChildMenuItem("Tool Radius", x, OnToolbarSetPenRadius);
       }
 
       if (attribs & ToolAttributes::Angle)
       {
-          attribMenuItem.AddChildMenuItem("Pen Angle", x, OnToolbarSetPenAngle);
+          attribMenuItem.AddChildMenuItem("Tool Angle", x, OnToolbarSetPenAngle);
       }
 
       attribMenuItem.FinishLayout(x);
