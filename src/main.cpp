@@ -115,25 +115,25 @@ public:
     {
         if (requestedWidth < hackforge::sc_minimum_canvas_width)
         {
-            m_errorMessage << "The requested width is less than the minimum of " << hackforge::sc_minimum_canvas_width;
+            m_errorMessage << "The image's width is less than the minimum of " << hackforge::sc_minimum_canvas_width;
             m_validWidth = false;
         }
         else if (requestedWidth > hackforge::sc_maximum_canvas_width)
         {
-            m_errorMessage << "The requested width exceeds the maximum of " << hackforge::sc_maximum_canvas_width;
+            m_errorMessage << "The image's width exceeds the maximum of " << hackforge::sc_maximum_canvas_width;
             m_validWidth = false;
         }
 
         if (requestedHeight < hackforge::sc_minimum_canvas_height)
         {
             AddTextBeforeHeightErrorMessage();
-            m_errorMessage << "he requested height is less than the minimum of " << hackforge::sc_minimum_canvas_height;
+            m_errorMessage << "he image's height is less than the minimum of " << hackforge::sc_minimum_canvas_height;
             m_validHeight = false;
         }
         else if (requestedHeight > hackforge::sc_maximum_canvas_height)
         {
             AddTextBeforeHeightErrorMessage();
-            m_errorMessage << "he requested height exceeds the maximum of " << hackforge::sc_maximum_canvas_height;
+            m_errorMessage << "he image's height exceeds the maximum of " << hackforge::sc_maximum_canvas_height;
             m_validHeight = false;
         }
 
@@ -309,6 +309,55 @@ void OnConfirmSetPenAngle(int requestedAngle)
     hackforge::penAngle = requestedAngle;
 }
 
+void TryOpenFile(std::filesystem::directory_entry de)
+{
+    std::string path = de.path().string();
+    SDL_Surface* pLoadedFile = IMG_Load(path.c_str());
+
+    if (!pLoadedFile)
+    {
+        std::string errorText = "The specified file was not a valid image file.";
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
+    }
+
+    SizeInputDialogValidation sidv(pLoadedFile->w, pLoadedFile->h);
+    if (!sidv.IsValid())
+    {
+        std::string errorText = sidv.GetErrorText().str();
+
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            errorText.c_str(),
+            28));
+        return;
+    }
+
+    // File looks good
+    hackforge::dialogs.pop_back();
+
+    if (pLoadedFile->w != hackforge::window_width || pLoadedFile->h != hackforge::window_height)
+    {
+        hackforge::window_width = pLoadedFile->w;
+        hackforge::window_height = pLoadedFile->h;
+
+        DestroyWindowSizeDependentResources();
+        CreateWindowSizeDependentResources();
+    }
+
+    SDL_PixelFormat pixel_format = SDL_GetWindowPixelFormat(hackforge::window);
+    SDL_Surface* convertedSurface = SDL_ConvertSurface(pLoadedFile, pixel_format);
+
+    SDL_UpdateTexture(hackforge::canvas, nullptr, convertedSurface->pixels, convertedSurface->pitch);
+}
+
 void OnTryToCloseFrontmostDialog()
 {
     DialogBoxCommon::DialogType type = hackforge::dialogs.back()->GetType();
@@ -355,6 +404,11 @@ void OnTryToCloseFrontmostDialog()
     {
         SizeInputDialogBox* pSizeInput = dynamic_cast<SizeInputDialogBox*>(hackforge::dialogs.back().get());
         OnConfirmSetCanvasSizeDialog_Resize(pSizeInput->GetRequestedCanvasWidth(), pSizeInput->GetRequestedCanvasHeight());
+    }
+    else if (type == DialogBoxCommon::DialogType::OpenFile)
+    {
+        FilePickerDialogBox* pFilePicker = dynamic_cast<FilePickerDialogBox*>(hackforge::dialogs.back().get());
+        TryOpenFile(pFilePicker->GetRequestedFile());
     }
 
 }

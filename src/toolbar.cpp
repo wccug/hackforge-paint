@@ -15,6 +15,16 @@ void OnToolbarExit() {
 void OnToolbarQuickSave() {
   hackforge::doQuickSave = true;
 }
+
+void OnToolbarOpen()
+{
+    hackforge::dialogs.emplace_back(std::make_unique<FilePickerDialogBox>(
+        "Load File",
+        DialogBoxCommon::DialogType::OpenFile,
+        hackforge::window_width,
+        hackforge::window_height));
+}
+
 void OnToolbarSetCanvasSize()
 {
     hackforge::dialogs.emplace_back(std::make_unique<SizeInputDialogBox>(

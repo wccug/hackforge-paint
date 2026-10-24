@@ -30,6 +30,7 @@ namespace ToolAttributes
 }
 
 void OnToolbarNew();
+void OnToolbarOpen();
 void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
@@ -266,6 +267,7 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
+      file.AddChildMenuItem("Open", x, OnToolbarOpen);
       file.AddChildMenuItem("Quick Save", x, OnToolbarQuickSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
       file.AddChildMenuItem("Set Canvas Size", x, OnToolbarSetCanvasSize);
