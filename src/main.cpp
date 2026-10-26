@@ -10,6 +10,7 @@
 #include <string>
 
 #include "colorpicker.hpp"
+#include "filepicker.hpp"
 #include "common.hpp"
 #include "dialogbox.hpp"
 
@@ -316,7 +317,7 @@ void TryOpenFile(std::filesystem::directory_entry de)
 
     if (!pLoadedFile)
     {
-        std::string errorText = "The specified file was not a valid image file.";
+        std::string errorText = "The specified file is not a valid image file.";
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             "Information",
             hackforge::window_width,
@@ -464,6 +465,21 @@ void OnMouseLeftClick(SDL_Event* event)
     hackforge::penDown = true;
 }
 
+void OnMouseWheel(SDL_Event* event)
+{
+    if (hackforge::dialogs.size() > 0)
+    {
+        bool tryToCloseDialog = false;
+        hackforge::dialogs.back()->OnMouseWheel(event->wheel.direction, event->wheel.x, event->wheel.y);
+
+        if (tryToCloseDialog)
+        {
+            OnTryToCloseFrontmostDialog();
+        }
+        return;
+    }
+}
+
 void ClearImpl()
 {
     SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
@@ -510,6 +526,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
         if (event->button.button == SDL_BUTTON_LEFT) {
             hackforge::penDown = false;
         }
+    }
+    else if (event->type == SDL_EVENT_MOUSE_WHEEL)
+    {
+        OnMouseWheel(event);
     }
     else if (event->type == SDL_EVENT_KEY_UP)
     {

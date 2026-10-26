@@ -178,6 +178,7 @@
     <ClInclude Include="src\colorpicker.hpp" />
     <ClInclude Include="src\common.hpp" />
     <ClInclude Include="src\dialogbox.hpp" />
+    <ClInclude Include="src\filepicker.hpp" />
     <ClInclude Include="src\spraypaint.hpp" />
     <ClInclude Include="src\uilayout.hpp" />
     <ClInclude Include="src\Toolbar.hpp" />

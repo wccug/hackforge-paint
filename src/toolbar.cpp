@@ -1,5 +1,6 @@
 #include "Toolbar.hpp"
 #include "colorpicker.hpp"
+#include "filepicker.hpp"
 #include "common.hpp"
 
 namespace hackforge {
