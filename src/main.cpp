@@ -11,6 +11,7 @@
 
 #include "colorpicker.hpp"
 #include "filepicker.hpp"
+#include "infodialog.hpp"
 #include "common.hpp"
 #include "dialogbox.hpp"
 
@@ -81,6 +82,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     AllocateScreenDoorTexture(hackforge::renderer);
 
     hackforge::OnToolbarSetPencilTool();
+
+    hackforge::dialogs.emplace_back(std::make_unique<FilePickerDialogBox>(
+        "Save File",
+        DialogBoxCommon::DialogType::SaveFile,
+        hackforge::window_width,
+        hackforge::window_height));
 
     return SDL_APP_CONTINUE;
 }
@@ -178,6 +185,7 @@ void OnConfirmSetCanvasSizeDialog_NewDocument(int newWidth, int newHeight)
         std::string errorText = sidv.GetErrorText().str();
 
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -216,6 +224,7 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     {
         std::string errorText = sidv.GetErrorText().str();
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -247,6 +256,7 @@ void OnConfirmSetCanvasSizeDialog_Resize(int newWidth, int newHeight)
     if (newWidth < hackforge::window_width || newHeight < hackforge::window_height)
     {
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             newWidth,
             newHeight,
@@ -271,6 +281,7 @@ void OnConfirmSetPenRadius(int requestedRadius)
     {
         std::string errorText = "Please choose a radius between 1 and 200, inclusive.";
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -297,6 +308,7 @@ void OnConfirmSetPenAngle(int requestedAngle)
     {
         std::string errorText = "Please choose a radius between 0 and 180, inclusive.";
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -319,6 +331,7 @@ void TryOpenFile(std::filesystem::directory_entry de)
     {
         std::string errorText = "The specified file is not a valid image file.";
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -333,6 +346,7 @@ void TryOpenFile(std::filesystem::directory_entry de)
         std::string errorText = sidv.GetErrorText().str();
 
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
@@ -359,10 +373,67 @@ void TryOpenFile(std::filesystem::directory_entry de)
     SDL_UpdateTexture(hackforge::canvas, nullptr, convertedSurface->pixels, convertedSurface->pitch);
 }
 
+void TrySaveFile(std::filesystem::directory_entry de, DialogResult overwriteConfirm)
+{
+    if (overwriteConfirm != DialogResult::OK && de.exists())
+    {
+        std::stringstream messageBoxText;
+        messageBoxText << "The specified file already exists. Is it OK to overwrite it?";
+
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::SaveFile_ConfirmOverwrite_OKCancel,
+            "File Overwrite",
+            hackforge::window_width,
+            hackforge::window_height,
+            messageBoxText.str().c_str(),
+            28));
+        return;
+    }
+
+    std::string path = de.path().string();
+
+    SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
+    SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, nullptr);
+
+    bool saveResult = IMG_SavePNG(surface, path.c_str());
+    
+    SDL_DestroySurface(surface);
+
+    if (!saveResult)
+    {
+        std::stringstream messageBoxText;
+        messageBoxText << "The specified file could not be saved.";
+
+        hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
+            "Information",
+            hackforge::window_width,
+            hackforge::window_height,
+            messageBoxText.str().c_str(),
+            28));
+        return;
+    }
+
+    // File looks good
+    hackforge::dialogs.pop_back();
+
+    std::stringstream messageBoxText;
+    messageBoxText << "File " << de.path().filename().string() << " saved successfully.";
+
+    hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+        DialogBoxCommon::DialogType::InfoOK,
+        "Information",
+        hackforge::window_width,
+        hackforge::window_height,
+        messageBoxText.str().c_str(),
+        28));
+    return;
+}
+
 void OnTryToCloseFrontmostDialog()
 {
     DialogBoxCommon::DialogType type = hackforge::dialogs.back()->GetType();
-    if (type == DialogBoxCommon::DialogType::Info)
+    if (type == DialogBoxCommon::DialogType::InfoOK)
     {
         hackforge::dialogs.pop_back();
         return;
@@ -410,6 +481,18 @@ void OnTryToCloseFrontmostDialog()
     {
         FilePickerDialogBox* pFilePicker = dynamic_cast<FilePickerDialogBox*>(hackforge::dialogs.back().get());
         TryOpenFile(pFilePicker->GetRequestedFile());
+    }
+    else if (type == DialogBoxCommon::DialogType::SaveFile)
+    {
+        FilePickerDialogBox* pFilePicker = dynamic_cast<FilePickerDialogBox*>(hackforge::dialogs.back().get());
+        TrySaveFile(pFilePicker->GetRequestedFile(), DialogResult::None);
+    }
+    else if (type == DialogBoxCommon::DialogType::SaveFile_ConfirmOverwrite_OKCancel)
+    {
+        DialogResult r = hackforge::dialogs.back()->GetDialogResult();
+        hackforge::dialogs.pop_back();
+        FilePickerDialogBox* pFilePicker = dynamic_cast<FilePickerDialogBox*>(hackforge::dialogs.back().get());
+        TrySaveFile(pFilePicker->GetRequestedFile(), r);
     }
 
 }
@@ -622,6 +705,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         messageBoxText << "File " << filename << " saved.";
 
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+            DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,

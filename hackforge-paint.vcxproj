@@ -171,7 +171,6 @@
     <ClCompile Include="src\bucket.cpp" />
     <ClCompile Include="src\toolbar.cpp" />
     <ClCompile Include="src\uilayout.cpp" />
-    <ClCompile Include="src\win32\toolbar_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AnglePen.hpp" />

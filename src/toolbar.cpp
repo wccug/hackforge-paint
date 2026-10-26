@@ -1,6 +1,7 @@
 #include "Toolbar.hpp"
 #include "colorpicker.hpp"
 #include "filepicker.hpp"
+#include "infodialog.hpp"
 #include "common.hpp"
 
 namespace hackforge {
@@ -22,6 +23,15 @@ void OnToolbarOpen()
     hackforge::dialogs.emplace_back(std::make_unique<FilePickerDialogBox>(
         "Load File",
         DialogBoxCommon::DialogType::OpenFile,
+        hackforge::window_width,
+        hackforge::window_height));
+}
+
+void OnToolbarSaveAs() 
+{
+    hackforge::dialogs.emplace_back(std::make_unique<FilePickerDialogBox>(
+        "Save File",
+        DialogBoxCommon::DialogType::SaveFile,
         hackforge::window_width,
         hackforge::window_height));
 }
@@ -125,6 +135,7 @@ void OnToolbarSetSpraypaintTool() {
 void OnToolbarAbout()
 {
     hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
+        DialogBoxCommon::DialogType::InfoOK,
         "Information",
         hackforge::window_width,
         hackforge::window_height,

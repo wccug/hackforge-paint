@@ -458,7 +458,7 @@ private:
         float layoutY = m_currentColorRect.y;
 
         int rgbValue = (m_selectedColor.r << 16) | (m_selectedColor.g << 8) | m_selectedColor.b;
-        m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
+        m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, 100, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
     }
 };
 

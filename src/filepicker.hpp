@@ -13,21 +13,22 @@ class FilePickerDialogBox : public DialogBoxCommon
 
     struct DisplayedItem
     {
-        size_t Index;
+        int Index;
         SDL_FRect Rect;
     };
 
     std::vector<MenuItem> m_fileList;
     std::vector<DisplayedItem> m_displayed;
 
-    static const size_t sc_numLinesDisplayed = 10;
-    size_t m_displayStartIndex = 0;
-    size_t m_displayEndIndex = 0;
-    size_t m_selectionIndex = 0;
+    int m_numLinesDisplayed = 10;
+    int m_displayStartIndex = 0;
+    int m_displayEndIndex = 0;
+    int m_selectionIndex = 0;
     std::filesystem::path m_targetDirectory;
 
     Button m_okButton;
     Button m_cancelButton;
+    LabelledTextBox m_newFilenameTextBox;
 
     std::filesystem::directory_entry m_requestedFile;
     DialogResult m_dialogResult = DialogResult::None;
@@ -37,6 +38,9 @@ public:
     FilePickerDialogBox(const char* dialogTitle, DialogBoxCommon::DialogType type, int parentWindowWidth, int parentWindowHeight)
         : DialogBoxCommon(type, dialogTitle)
     {
+        if (type == DialogType::OpenFile) m_numLinesDisplayed = 10;
+        else if (type == DialogType::SaveFile) m_numLinesDisplayed = 8;
+
         Layout(parentWindowWidth, parentWindowHeight);
         m_cancelButton.SetOnMenubar(true);
     }
@@ -49,6 +53,17 @@ public:
 
     void ConfirmSelection(bool* pCloseDialog)
     {
+        if (m_type == DialogType::SaveFile && m_selectionIndex == -1)
+        {
+            std::filesystem::path baseDir = m_targetDirectory;
+            std::filesystem::directory_entry selectedFile{ baseDir / m_newFilenameTextBox.GetTextFieldValue() };
+
+            m_requestedFile = selectedFile;
+            m_dialogResult = DialogResult::OK;
+            *pCloseDialog = true;
+            return;
+        }
+
         MenuItem* pMenuItem = &m_fileList[m_selectionIndex];
 
         if (pMenuItem->WhichType == MenuItem::DirectoryEntry)
@@ -79,8 +94,8 @@ public:
     {
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
-            m_dialogResult = DialogResult::OK;
+            ConfirmSelection(pCloseDialog);
+            return;
         }
 
         if (m_cancelButton.IsHighlighted())
@@ -105,12 +120,22 @@ public:
             else
             {
                 m_selectionIndex = m_displayed[i].Index;
+                m_newFilenameTextBox.SetFocus(false);
             }
             return;
         }
+
+        if (m_type == DialogType::SaveFile)
+        {
+            m_newFilenameTextBox.OnMouseClick(x, y);
+            if (m_newFilenameTextBox.IsFocused())
+            {
+                m_selectionIndex = -1;
+            }
+        }
     }
 
-    void TryMoveSeelctionDown()
+    void TryMoveSelectionDown()
     {
         if (m_selectionIndex < m_fileList.size() - 1)
         {
@@ -140,7 +165,7 @@ public:
     {
         if (y < 0)
         {
-            TryMoveSeelctionDown();
+            TryMoveSelectionDown();
         }
         else if (y > 0)
         {
@@ -165,13 +190,21 @@ public:
 
         if (key == SDLK_DOWN)
         {
-            TryMoveSeelctionDown();
+            TryMoveSelectionDown();
             return;
         }
 
         if (key == SDLK_UP)
         {
             TryMoveSelectionUp();
+            return;
+        }
+
+        if (m_type == DialogType::SaveFile)
+        {
+            m_selectionIndex = -1;
+            m_newFilenameTextBox.SetFocus(true);
+            m_newFilenameTextBox.OnKeyboardInput(key);
             return;
         }
     }
@@ -222,7 +255,7 @@ public:
             {
                 DisplayedItem di{};
                 di.Rect = rect;
-                di.Index = i;
+                di.Index = static_cast<int>(i);
                 m_displayed.push_back(di);
             }
 
@@ -252,6 +285,12 @@ public:
                 displayedString.c_str());
 
             layoutY += hackforge::toolbar_height;
+        }
+
+        // Show the text field for SaveAs
+        if (m_type == DialogType::SaveFile)
+        {
+            m_newFilenameTextBox.Draw(renderer, uiColor);
         }
 
         m_okButton.Draw(renderer, uiColor);
@@ -299,7 +338,7 @@ private:
 
         m_selectionIndex = 0;
         m_displayStartIndex = 0;
-        m_displayEndIndex = std::min(m_displayStartIndex + sc_numLinesDisplayed + 1, m_fileList.size() - 1);
+        m_displayEndIndex = std::min(m_displayStartIndex + m_numLinesDisplayed + 1, static_cast<int>(m_fileList.size() - 1));
     }
 
     void Layout(int parentWindowWidth, int parentWindowHeight)
@@ -318,6 +357,13 @@ private:
         m_targetDirectory = ".";
         m_targetDirectory = std::filesystem::absolute(m_targetDirectory);
         PopulateDisplayedList();
+
+        if (m_type == DialogType::SaveFile)
+        {
+            float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+            float layoutY = m_dialogRect.y + hackforge::sc_dialogbox_margin + ((m_numLinesDisplayed + 4) * hackforge::toolbar_height);
+            m_newFilenameTextBox.Layout(&layoutX, &layoutY, hackforge::GetRenderedTextWidthInPixels(9), 500, "Filename:", 0, LabelledTextBox::FormatMode::AlphanumericChars);
+        }
 
         // Position the OK button
         float okButtonWidth = hackforge::GetRenderedTextWidthInPixels(2) + hackforge::sc_dialogbox_margin + hackforge::sc_dialogbox_margin;
