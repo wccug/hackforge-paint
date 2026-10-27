@@ -34,6 +34,7 @@ inline bool doQuickSave = false;
 inline bool doUndo = false;
 inline bool doHorizontalFlip = false;
 inline bool doVerticalFlip = false;
+inline bool doDesaturate = false;
 
 // --- State variables for the Custom Tooling colors ---
 inline SDL_Color penColor = {255, 255, 255, 255}; // Default Pen: White

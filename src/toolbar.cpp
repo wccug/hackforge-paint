@@ -57,6 +57,10 @@ void OnToolbarVerticalFlip() {
     hackforge::doVerticalFlip = true;
 }
 
+void OnToolbarDesaturate() {
+    hackforge::doDesaturate = true;
+}
+
 void OnToolbarSetPenColor() {
     hackforge::dialogs.emplace_back(std::make_unique<ColorPickerDialogBox>(
         DialogBoxCommon::DialogType::SetPenColor,

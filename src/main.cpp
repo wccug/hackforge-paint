@@ -14,6 +14,7 @@
 #include "infodialog.hpp"
 #include "common.hpp"
 #include "dialogbox.hpp"
+#include "cpueffect.hpp"
 
 void NewDocument()
 {
@@ -680,6 +681,36 @@ void RestoreUndoBuffer()
     SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
 }
 
+void Desaturate(CPUEffect* pEffect)
+{
+    int w = pEffect->GetLockedWidth();
+    int h = pEffect->GetLockedHeight();
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            unsigned int px = pEffect->ReadLockedPixel(x, y); // X8R8G8B8
+            
+            unsigned char b = px & 0xFF;
+            px >>= 8;
+            unsigned char g = px & 0xFF;
+            px >>= 8;
+            unsigned char r = px & 0xFF;
+
+            unsigned char avg = (r + b + g) / 3;
+
+            px &= 0xFF00;
+            px |= avg;
+            px <<= 8;
+            px |= avg;
+            px <<= 8;
+            px |= avg;            
+
+            pEffect->WriteLockedPixel(x, y, px);
+        }
+    }
+}
+
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
@@ -735,6 +766,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         BackupUndoBuffer();
         DrawCopyOfCanvasWithFlipMode(hackforge::renderer, hackforge::canvas, SDL_FLIP_VERTICAL);
         hackforge::doVerticalFlip = false;
+    }
+
+    if (hackforge::doDesaturate)
+    {
+        BackupUndoBuffer();
+        CPUEffect cpuEffect(hackforge::renderer, hackforge::window_width, hackforge::window_height, hackforge::canvas);
+        cpuEffect.BeginCpuWrite();
+        Desaturate(&cpuEffect);
+        cpuEffect.EndCpuWrite();
+        hackforge::doDesaturate = false;
     }
 
     // --- 1. Canvas Drawing Pass ---

@@ -47,6 +47,7 @@ void OnToolbarSetSpraypaintTool();
 void OnToolbarUndo();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
+void OnToolbarDesaturate();
 void OnToolbarSetCanvasSize();
 void OnToolbarAbout();
 
@@ -315,6 +316,7 @@ public:
         effect.AddChildMenuItem("Undo", x, OnToolbarUndo);
         effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
         effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
+        effect.AddChildMenuItem("Desaturate", x, OnToolbarDesaturate);
         effect.FinishLayout(x);
         float toolbarWidth = effect.GetWidth();
         m_toolbarItems.push_back(effect);
