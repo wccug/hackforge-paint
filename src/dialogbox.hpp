@@ -247,8 +247,12 @@ public:
 
             if (m_text.length() < textLimit)
             {
-                char keyCh = key;
-                m_text.push_back(keyCh);
+                bool isVisibleAscii = key >= 32 && key <= 126;
+                if (isVisibleAscii)
+                {
+                    char keyCh = key;
+                    m_text.push_back(keyCh);
+                }
             }
             return;
         }

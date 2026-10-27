@@ -243,7 +243,15 @@ public:
             }
             else if (m_fileList[i].WhichType == MenuItem::DirectoryEntry)
             {
-                displayedString = m_fileList[i].Dir.path().filename().string();
+                try
+                {
+                    displayedString = m_fileList[i].Dir.path().filename().string();
+                }
+                catch (const std::system_error&)
+                {
+                    // This gets thrown if we run into a path which has non-ASCII characters, which our current text rendering doesn't support. Ah well
+                    displayedString = "[Non-printable characters]";
+                }
             }
 
             SDL_FRect rect{};

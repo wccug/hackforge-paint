@@ -83,12 +83,6 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     hackforge::OnToolbarSetPencilTool();
 
-    hackforge::dialogs.emplace_back(std::make_unique<FilePickerDialogBox>(
-        "Save File",
-        DialogBoxCommon::DialogType::SaveFile,
-        hackforge::window_width,
-        hackforge::window_height));
-
     return SDL_APP_CONTINUE;
 }
 
@@ -390,12 +384,12 @@ void TrySaveFile(std::filesystem::directory_entry de, DialogResult overwriteConf
         return;
     }
 
-    std::string path = de.path().string();
+    std::u8string path = de.path().u8string();
 
     SDL_SetRenderTarget(hackforge::renderer, hackforge::canvas);
     SDL_Surface* surface = SDL_RenderReadPixels(hackforge::renderer, nullptr);
 
-    bool saveResult = IMG_SavePNG(surface, path.c_str());
+    bool saveResult = IMG_SavePNG(surface, reinterpret_cast<const char*>(path.c_str()));
     
     SDL_DestroySurface(surface);
 
@@ -418,7 +412,17 @@ void TrySaveFile(std::filesystem::directory_entry de, DialogResult overwriteConf
     hackforge::dialogs.pop_back();
 
     std::stringstream messageBoxText;
-    messageBoxText << "File " << de.path().filename().string() << " saved successfully.";
+    messageBoxText << "File ";
+    try
+    {
+        messageBoxText << de.path().filename().string() << " ";
+    }
+    catch (std::system_error)
+    {
+
+    }
+    messageBoxText << "saved successfully.";
+
 
     hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
         DialogBoxCommon::DialogType::InfoOK,
