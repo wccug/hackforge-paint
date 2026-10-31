@@ -506,10 +506,9 @@ void OnKeyboardInput(SDL_Event* event)
 {
     if (!hackforge::dialogs.empty())
     {
-        bool tryToCloseDialog = false;
-        hackforge::dialogs.back()->OnKeyboardInput(event->key.key, &tryToCloseDialog);
+        DialogCloseResult closeResult = hackforge::dialogs.back()->OnKeyboardInput(event->key.key);
 
-        if (tryToCloseDialog)
+        if (closeResult == DialogCloseResult::ShouldCloseDialog)
         {
             OnTryToCloseFrontmostDialog();
         }
@@ -527,10 +526,9 @@ void OnMouseLeftClick(SDL_Event* event)
 {
     if (!hackforge::dialogs.empty())
     {
-        bool tryToCloseDialog = false;
-        hackforge::dialogs.back()->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &tryToCloseDialog);
+        DialogCloseResult closeResult = hackforge::dialogs.back()->OnMouseClick(event->button.x, event->button.y, hackforge::renderer);
 
-        if (tryToCloseDialog)
+        if (closeResult == DialogCloseResult::ShouldCloseDialog)
         {
             OnTryToCloseFrontmostDialog();
         }

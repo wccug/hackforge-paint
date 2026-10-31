@@ -12,6 +12,12 @@ enum class DialogResult
     Cancel
 };
 
+enum class DialogCloseResult
+{
+    KeepOpen,
+    ShouldCloseDialog
+};
+
 class Button
 {
     bool m_onMenubar{};
@@ -363,9 +369,9 @@ public:
     DialogType GetType() const { return m_type; }
 
     virtual void OnMouseMove(float x, float y, bool mouseButtonDown) = 0;
-    virtual void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) = 0;
+    virtual DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) = 0;
     virtual void OnMouseWheel(SDL_MouseWheelDirection dir, float x, float y) {};
-    virtual void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) = 0;
+    virtual DialogCloseResult OnKeyboardInput(SDL_Keycode key) = 0;
     virtual void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) = 0;
     virtual DialogResult GetDialogResult() const = 0;
 
@@ -445,46 +451,45 @@ public:
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         m_textBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (key == 13) // Enter
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (key == 27) // Escape
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_textBox.IsFocused())
         {
             m_textBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
@@ -559,27 +564,26 @@ public:
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         m_widthTextBox.OnMouseClick(x, y);
         m_heightTextBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (key == 9) // tab
         {
@@ -593,34 +597,34 @@ public:
                 m_widthTextBox.SetFocus(true);
                 m_heightTextBox.SetFocus(false);
             }
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (key == 13) // Enter
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (key == 27) // Escape
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_widthTextBox.IsFocused())
         {
             m_widthTextBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (m_heightTextBox.IsFocused())
         {
             m_heightTextBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override

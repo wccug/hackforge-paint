@@ -45,13 +45,13 @@ public:
         m_cancelButton.SetOnMenubar(true);
     }
 
-    void OnMouseMove(float x, float y, bool) override
+    void OnMouseMove(float x, float y, bool mouseButtonDown) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void ConfirmSelection(bool* pCloseDialog)
+    DialogCloseResult ConfirmSelection()
     {
         if (m_type == DialogType::SaveFile && m_selectionIndex == -1)
         {
@@ -60,8 +60,7 @@ public:
 
             m_requestedFile = selectedFile;
             m_dialogResult = DialogResult::OK;
-            *pCloseDialog = true;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         MenuItem* pMenuItem = &m_fileList[m_selectionIndex];
@@ -79,7 +78,7 @@ public:
                 // Choose this file
                 m_requestedFile = pMenuItem->Dir;
                 m_dialogResult = DialogResult::OK;
-                *pCloseDialog = true;
+                return DialogCloseResult::ShouldCloseDialog;
             }
 
         }
@@ -88,21 +87,20 @@ public:
             m_targetDirectory = m_targetDirectory.parent_path();
             PopulateDisplayedList();
         }
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_okButton.IsHighlighted())
         {
-            ConfirmSelection(pCloseDialog);
-            return;
+            return ConfirmSelection();
         }
 
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         // Check if we clicked on any of the menu items
@@ -115,14 +113,14 @@ public:
             size_t requestedSelectionIndex = m_displayed[i].Index;
             if (m_selectionIndex == requestedSelectionIndex)
             {
-                ConfirmSelection(pCloseDialog);
+                return ConfirmSelection();
             }
             else
             {
                 m_selectionIndex = m_displayed[i].Index;
                 m_newFilenameTextBox.SetFocus(false);
             }
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (m_type == DialogType::SaveFile)
@@ -133,6 +131,8 @@ public:
                 m_selectionIndex = -1;
             }
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void TryMoveSelectionDown()
@@ -173,31 +173,29 @@ public:
         }
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (key == 27) // Escape
         {
             m_dialogResult = DialogResult::Cancel;
-            *pCloseDialog = true;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (key == 13) // Enter
         {
-            ConfirmSelection(pCloseDialog);
-            return;
+            return ConfirmSelection();
         }
 
         if (key == SDLK_DOWN)
         {
             TryMoveSelectionDown();
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (key == SDLK_UP)
         {
             TryMoveSelectionUp();
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (m_type == DialogType::SaveFile)
@@ -205,8 +203,10 @@ public:
             m_selectionIndex = -1;
             m_newFilenameTextBox.SetFocus(true);
             m_newFilenameTextBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override

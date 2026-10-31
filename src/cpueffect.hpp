@@ -9,7 +9,7 @@
 class CPUEffect
 {
     SDL_Surface* m_intermediateCpu{};
-    unsigned int* m_pixelData;
+    uint32_t* m_pixelData; // The surface format used here is each pixel==4 bytes
     SDL_Renderer* m_renderer{};
     SDL_Texture* m_canvas{};
     int m_lockedWidth;
@@ -27,7 +27,7 @@ public:
     {
         SDL_Rect lockRect{ .w = m_lockedWidth, .h = m_lockedHeight };
         m_intermediateCpu = SDL_RenderReadPixels(m_renderer, &lockRect);
-        m_pixelData = reinterpret_cast<unsigned int*>(m_intermediateCpu->pixels);
+        m_pixelData = reinterpret_cast<uint32_t*>(m_intermediateCpu->pixels);
     }
 
     unsigned int ReadLockedPixel(int x, int y)

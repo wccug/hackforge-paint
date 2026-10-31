@@ -77,20 +77,18 @@ public:
         }
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (hackforge::IsInBounds(x, y, m_mainPanelRect))
@@ -99,7 +97,7 @@ public:
             m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
             m_rereadSelectedColor = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (hackforge::IsInBounds(x, y, m_hueRect))
@@ -107,26 +105,25 @@ public:
             m_hueSelectionY = y - m_hueRect.y;
             m_recolorizeMainPanel = true;
             m_rereadSelectedColor = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         m_hexColorTextBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (key == 13) // Enter
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (key == 27) // Escape
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_hexColorTextBox.IsFocused())
@@ -135,7 +132,7 @@ public:
             m_hexColorTextBox.OnKeyboardInput(key);
             int newNumericValue = m_hexColorTextBox.GetTextFieldNumericValue();
 
-            if (previousNumericValue == newNumericValue) return;
+            if (previousNumericValue == newNumericValue) return DialogCloseResult::KeepOpen;
 
             // Set the current color based on the typed selection
             m_selectedColor.b = newNumericValue & 0xFF;
@@ -143,8 +140,10 @@ public:
             m_selectedColor.r = (newNumericValue >> 16) & 0xFF;
             InitializeSelectionUI();
             m_recolorizeMainPanel = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override

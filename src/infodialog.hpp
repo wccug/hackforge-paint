@@ -97,12 +97,12 @@ public:
     }
 
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog) override
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_okButton.IsHighlighted())
         {
             m_dialogResult = DialogResult::OK;
-            *pCloseDialog = true;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_type == DialogType::SaveFile_ConfirmOverwrite_OKCancel)
@@ -110,26 +110,28 @@ public:
             if (m_cancelButton.IsHighlighted())
             {
                 m_dialogResult = DialogResult::Cancel;
-                *pCloseDialog = true;
+                return DialogCloseResult::ShouldCloseDialog;
             }
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog) override
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (m_type == DialogType::SaveFile_ConfirmOverwrite_OKCancel)
         {
             if (key == 13)
             {
                 m_dialogResult = DialogResult::OK;
-                *pCloseDialog = true;
+                return DialogCloseResult::ShouldCloseDialog;
             }
             else if (key == 27)
             {
                 m_dialogResult = DialogResult::Cancel;
-                *pCloseDialog = true;
+                return DialogCloseResult::ShouldCloseDialog;
             }
-            return;
+            return DialogCloseResult::KeepOpen;
         }
         
         if (m_type == DialogType::InfoOK)
@@ -137,10 +139,12 @@ public:
             if (key == 13 || key == 27) // Enter or escape
             {
                 m_dialogResult = DialogResult::OK;
-                *pCloseDialog = true;
+                return DialogCloseResult::ShouldCloseDialog;
             }
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
     void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
