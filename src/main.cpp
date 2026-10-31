@@ -89,7 +89,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 void OnMouseMove(SDL_Event* event)
 {
-    if (hackforge::dialogs.size() > 0)
+    if (!hackforge::dialogs.empty())
     {
         hackforge::dialogs.back()->OnMouseMove(event->motion.x, event->motion.y, event->motion.state & SDL_BUTTON_LEFT);
         return;
@@ -319,18 +319,18 @@ void OnConfirmSetPenAngle(int requestedAngle)
 
 void TryOpenFile(std::filesystem::directory_entry de)
 {
-    std::string path = de.path().string();
-    SDL_Surface* pLoadedFile = IMG_Load(path.c_str());
+    std::u8string path = de.path().u8string();
+    SDL_Surface* pLoadedFile = IMG_Load(reinterpret_cast<const char*>(path.c_str()));
 
     if (!pLoadedFile)
     {
-        std::string errorText = "The specified file is not a valid image file.";
+        const char* errorText = "The specified file is not a valid image file.";
         hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
             DialogBoxCommon::DialogType::InfoOK,
             "Information",
             hackforge::window_width,
             hackforge::window_height,
-            errorText.c_str(),
+            errorText,
             28));
         return;
     }
@@ -504,7 +504,7 @@ void OnTryToCloseFrontmostDialog()
 
 void OnKeyboardInput(SDL_Event* event)
 {
-    if (hackforge::dialogs.size() > 0)
+    if (!hackforge::dialogs.empty())
     {
         bool tryToCloseDialog = false;
         hackforge::dialogs.back()->OnKeyboardInput(event->key.key, &tryToCloseDialog);
@@ -525,7 +525,7 @@ void OnKeyboardInput(SDL_Event* event)
 
 void OnMouseLeftClick(SDL_Event* event)
 {
-    if (hackforge::dialogs.size() > 0)
+    if (!hackforge::dialogs.empty())
     {
         bool tryToCloseDialog = false;
         hackforge::dialogs.back()->OnMouseClick(event->button.x, event->button.y, hackforge::renderer, &tryToCloseDialog);
@@ -555,7 +555,7 @@ void OnMouseLeftClick(SDL_Event* event)
 
 void OnMouseWheel(SDL_Event* event)
 {
-    if (hackforge::dialogs.size() > 0)
+    if (!hackforge::dialogs.empty())
     {
         bool tryToCloseDialog = false;
         hackforge::dialogs.back()->OnMouseWheel(event->wheel.direction, event->wheel.x, event->wheel.y);
@@ -873,16 +873,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
     // --- 3. Draw modal dialogs ---
     // Draw a screen door effect if there's any kind of dialog visible.
-    bool drawScreenDoor = hackforge::dialogs.size() > 0;
+    bool drawScreenDoor = !hackforge::dialogs.empty();
     if (drawScreenDoor)
     {
         // Show the screen door effect over the background
         SDL_RenderTextureTiled(hackforge::renderer, hackforge::screenDoor, NULL, 1.0f, NULL);
     }
 
-    for (size_t i = 0; i < hackforge::dialogs.size(); ++i)
+    for (auto const& dialog : hackforge::dialogs)
     {
-        hackforge::dialogs[i]->ShowDialog(hackforge::renderer, hackforge::buttonColor);
+        dialog->ShowDialog(hackforge::renderer, hackforge::buttonColor);
     }
 
     SDL_RenderPresent(hackforge::renderer);

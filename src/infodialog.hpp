@@ -124,7 +124,7 @@ public:
                 m_dialogResult = DialogResult::OK;
                 *pCloseDialog = true;
             }
-            else if (key == 13)
+            else if (key == 27)
             {
                 m_dialogResult = DialogResult::Cancel;
                 *pCloseDialog = true;
@@ -151,13 +151,13 @@ public:
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
         float layoutY = m_textY;
-        for (size_t i = 0; i < m_text.size(); ++i)
+        for (const std::string line : m_text)
         {
             SDL_RenderDebugText(
                 renderer,
                 m_textX / hackforge::toolbar_text_scaling,
                 layoutY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
-                m_text[i].c_str());
+                line.c_str());
 
             layoutY += hackforge::toolbar_height;
         }

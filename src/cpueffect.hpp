@@ -1,7 +1,7 @@
 #ifndef CPUEFFECT_H
 #define CPUEFFECT_H
 
-#include <assert.h>
+#include <cassert>
 
 // Intended for operations where real-time performance isn't needed, to be used
 // sparingly, since it copies the target to a CPU-visible resource and uploads

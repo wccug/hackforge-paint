@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numbers>
+
 class AnglePen
 {
     std::vector<int> m_indices;
@@ -19,7 +21,7 @@ public:
         m_indices.push_back(3);
     }
 
-    void Render(
+    inline void Render(
         SDL_Renderer* renderer, 
         float previousPenX, 
         float previousPenY, 
@@ -31,10 +33,9 @@ public:
     {
         EnsureIndices();
 
-        const float pi = 3.14159f;
-        float radians = static_cast<float>(penAngle) * (pi / 180.0f);
-        float x = cosf(radians) * static_cast<float>(penRadius);
-        float y = -sinf(radians) * static_cast<float>(penRadius);
+        float radians = penAngle * (static_cast<float>(std::numbers::pi) / 180.0f);
+        float x = std::cosf(radians) * static_cast<float>(penRadius);
+        float y = -std::sinf(radians) * static_cast<float>(penRadius);
 
         std::vector<SDL_Vertex> vertices;
         {
