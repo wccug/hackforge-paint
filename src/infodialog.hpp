@@ -121,12 +121,12 @@ public:
     {
         if (m_type == DialogType::SaveFile_ConfirmOverwrite_OKCancel)
         {
-            if (key == 13)
+            if (key == SDLK_RETURN)
             {
                 m_dialogResult = DialogResult::OK;
                 return DialogCloseResult::ShouldCloseDialog;
             }
-            else if (key == 27)
+            else if (key == SDLK_ESCAPE)
             {
                 m_dialogResult = DialogResult::Cancel;
                 return DialogCloseResult::ShouldCloseDialog;
@@ -136,7 +136,7 @@ public:
         
         if (m_type == DialogType::InfoOK)
         {
-            if (key == 13 || key == 27) // Enter or escape
+            if (key == SDLK_RETURN || key == SDLK_ESCAPE)
             {
                 m_dialogResult = DialogResult::OK;
                 return DialogCloseResult::ShouldCloseDialog;

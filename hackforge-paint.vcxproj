@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
     <ClCompile Include="src\bucket.cpp" />
+    <ClCompile Include="src\filepicker.cpp" />
     <ClCompile Include="src\toolbar.cpp" />
     <ClCompile Include="src\uilayout.cpp" />
   </ItemGroup>

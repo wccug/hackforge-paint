@@ -114,13 +114,13 @@ public:
 
     DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
-        if (key == 13) // Enter
+        if (key == SDLK_RETURN)
         {
             m_dialogResult = DialogResult::OK;
             return DialogCloseResult::ShouldCloseDialog;
         }
 
-        if (key == 27) // Escape
+        if (key == SDLK_ESCAPE) 
         {
             m_dialogResult = DialogResult::Cancel;
             return DialogCloseResult::ShouldCloseDialog;
