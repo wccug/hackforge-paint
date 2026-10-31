@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numbers>
+
 class AnglePen
 {
     std::vector<int> m_indices;
@@ -19,37 +21,49 @@ public:
         m_indices.push_back(3);
     }
 
-    void Render(SDL_Renderer* renderer, float previousPenX, float previousPenY, float currentPenX, float currentPenY, SDL_Color const& penColor)
+    inline void Render(
+        SDL_Renderer* renderer, 
+        float previousPenX, 
+        float previousPenY, 
+        float currentPenX, 
+        float currentPenY, 
+        SDL_Color const& penColor,
+        int penRadius,
+        int penAngle)
     {
         EnsureIndices();
+
+        float radians = penAngle * (static_cast<float>(std::numbers::pi) / 180.0f);
+        float x = std::cosf(radians) * static_cast<float>(penRadius);
+        float y = -std::sinf(radians) * static_cast<float>(penRadius);
 
         std::vector<SDL_Vertex> vertices;
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX - 10;
-            v.position.y = previousPenY - 10;
+            v.position.x = previousPenX - x;
+            v.position.y = previousPenY - y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = previousPenX + 10;
-            v.position.y = previousPenY + 10;
+            v.position.x = previousPenX + x;
+            v.position.y = previousPenY + y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX + 10;
-            v.position.y = currentPenY + 10;
+            v.position.x = currentPenX + x;
+            v.position.y = currentPenY + y;
             vertices.push_back(v);
         }
         {
             SDL_Vertex v{};
             v.color = hackforge::OpaqueUnormColorToOpaqueFloatColor(penColor);
-            v.position.x = currentPenX - 10;
-            v.position.y = currentPenY - 10;
+            v.position.x = currentPenX - x;
+            v.position.y = currentPenY - y;
             vertices.push_back(v);
         }
 

@@ -34,14 +34,8 @@ class ColorPickerDialogBox : public DialogBoxCommon
 
 public:
 
-    enum class Mode
-    {
-        SetPenColor,
-        SetUIColor
-    };
-
-    ColorPickerDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, Mode mode, SDL_Color selectedColor)
-        : DialogBoxCommon(dialogTitle), m_mode(mode), m_selectedColor(selectedColor)
+    ColorPickerDialogBox(DialogType dialogType, const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, SDL_Color selectedColor)
+        : DialogBoxCommon(dialogType, dialogTitle), m_selectedColor(selectedColor)
     {
         Layout(parentWindowWidth, parentWindowHeight);
 
@@ -56,14 +50,12 @@ public:
 
     SDL_Color GetRequestedColor() const { return m_selectedColor; }
 
-    Mode GetMode() const { return m_mode; }
-
-    DialogResult GetDialogResult() const
+    DialogResult GetDialogResult() const override
     {
         return m_dialogResult;
     }
 
-    void OnMouseMove(float x, float y, bool mouseButtonDown)
+    void OnMouseMove(float x, float y, bool mouseButtonDown) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
@@ -86,20 +78,18 @@ public:
         }
     }
 
-    void OnMouseClick(float x, float y, SDL_Renderer* renderer, bool* pCloseDialog)
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (hackforge::IsInBounds(x, y, m_mainPanelRect))
@@ -108,7 +98,7 @@ public:
             m_mainPanelSelectionY = y - m_mainPanelRect.y;
 
             m_rereadSelectedColor = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (hackforge::IsInBounds(x, y, m_hueRect))
@@ -116,26 +106,25 @@ public:
             m_hueSelectionY = y - m_hueRect.y;
             m_recolorizeMainPanel = true;
             m_rereadSelectedColor = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         m_hexColorTextBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
-        if (key == 13) // Enter
+        if (key == SDLK_RETURN)
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
-        if (key == 27) // Escape
+        if (key == SDLK_ESCAPE) 
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_hexColorTextBox.IsFocused())
@@ -144,7 +133,7 @@ public:
             m_hexColorTextBox.OnKeyboardInput(key);
             int newNumericValue = m_hexColorTextBox.GetTextFieldNumericValue();
 
-            if (previousNumericValue == newNumericValue) return;
+            if (previousNumericValue == newNumericValue) return DialogCloseResult::KeepOpen;
 
             // Set the current color based on the typed selection
             m_selectedColor.b = newNumericValue & 0xFF;
@@ -152,11 +141,13 @@ public:
             m_selectedColor.r = (newNumericValue >> 16) & 0xFF;
             InitializeSelectionUI();
             m_recolorizeMainPanel = true;
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
 
@@ -467,10 +458,8 @@ private:
         float layoutY = m_currentColorRect.y;
 
         int rgbValue = (m_selectedColor.r << 16) | (m_selectedColor.g << 8) | m_selectedColor.b;
-        m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
+        m_hexColorTextBox.Layout(&layoutX, &layoutY, 16, 100, "#", rgbValue, LabelledTextBox::FormatMode::Hex6Digits);
     }
-
-    Mode m_mode;
 };
 
 #endif

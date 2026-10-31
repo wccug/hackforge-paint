@@ -14,22 +14,40 @@ enum class Tool
     Stamp,
     AnglePen,
     PaintBucket,
-    Eyedropper
+    Eyedropper,
+    Spraypaint
 };
 
+namespace ToolAttributes
+{
+    enum ToolAttributesType
+    {
+        None = 0x0,
+        Colour = 0x1,
+        Radius = 0x2,
+        Angle = 0x4
+    };
+}
+
 void OnToolbarNew();
+void OnToolbarOpen();
 void OnToolbarQuickSave();
 void OnToolbarSaveAs();
 void OnToolbarExit();
 void OnToolbarSetPenColor();
+void OnToolbarSetPenRadius();
+void OnToolbarSetPenAngle();
 void OnToolbarSetUIColor();
 void OnToolbarSetPencilTool();
 void OnToolbarSetStampTool();
 void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
 void OnToolbarSetEyedropperTool();
+void OnToolbarSetSpraypaintTool();
+void OnToolbarUndo();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
+void OnToolbarDesaturate();
 void OnToolbarSetCanvasSize();
 void OnToolbarAbout();
 
@@ -107,6 +125,8 @@ protected:
 class ChildMenuItem : public MenuItem {
 
 public:
+  bool m_enabled;
+
   void (*m_fn)();
 
   ChildMenuItem() : m_fn(nullptr) {
@@ -133,6 +153,13 @@ class TopLevelMenuItem : public MenuItem {
 
 public:
   TopLevelMenuItem() : m_longestLabelLength(0) {
+  }
+
+  void ClearItems()
+  {
+      m_childMenuItems.clear();
+      m_longestLabelLength = 0;
+      m_expandedBoxWidth = 0;
   }
 
   void AddChildMenuItem(std::string label, float x, void (*fn)()) {
@@ -212,6 +239,10 @@ public:
     return m_bounds.w;
   }
 
+  float GetLeft() const {
+      return m_bounds.x;
+  }
+
   size_t GetNumChildMenuItems() const {
     return m_childMenuItems.size();
   }
@@ -237,6 +268,7 @@ public:
       TopLevelMenuItem file;
       file.SetLabel("File");
       file.AddChildMenuItem("New", x, OnToolbarNew);
+      file.AddChildMenuItem("Open", x, OnToolbarOpen);
       file.AddChildMenuItem("Quick Save", x, OnToolbarQuickSave);
       file.AddChildMenuItem("Save As", x, OnToolbarSaveAs);
       file.AddChildMenuItem("Set Canvas Size", x, OnToolbarSetCanvasSize);
@@ -256,6 +288,7 @@ public:
       tool.AddChildMenuItem("Angle Pen", x, OnToolbarSetAnglePenTool);
       tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
       tool.AddChildMenuItem("Eyedropper", x, OnToolbarSetEyedropperTool);
+      tool.AddChildMenuItem("Spraypaint", x, OnToolbarSetSpraypaintTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);
@@ -265,29 +298,31 @@ public:
       x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
+        TopLevelMenuItem attributes;
+        attributes.SetLabel("Attributes");
+        attributes.AddChildMenuItem("Tool Colour", x, OnToolbarSetPenColor);
+        attributes.AddChildMenuItem("Tool Radius", x, OnToolbarSetPenRadius);
+        attributes.AddChildMenuItem("Tool Angle", x, OnToolbarSetPenRadius);
+        attributes.FinishLayout(x);
+        float toolbarWidth = attributes.GetWidth();
+        m_toolbarItems.push_back(attributes);
+
+        x += toolbarWidth;
+        x += hackforge::toolbar_top_level_menu_horizontal_spacing;
+    }
+    {
         TopLevelMenuItem effect;
         effect.SetLabel("Effect");
+        effect.AddChildMenuItem("Undo", x, OnToolbarUndo);
         effect.AddChildMenuItem("Horizontal Flip", x, OnToolbarHorizontalFlip);
         effect.AddChildMenuItem("Vertical Flip", x, OnToolbarVerticalFlip);
+        effect.AddChildMenuItem("Desaturate", x, OnToolbarDesaturate);
         effect.FinishLayout(x);
         float toolbarWidth = effect.GetWidth();
         m_toolbarItems.push_back(effect);
 
         x += toolbarWidth;
         x += hackforge::toolbar_top_level_menu_horizontal_spacing;
-    }
-    {
-      TopLevelMenuItem color;
-      color.SetLabel("Colour");
-      color.AddChildMenuItem(
-        "Pen Colour",
-        x, OnToolbarSetPenColor);
-      color.FinishLayout(x);
-      float toolbarWidth = color.GetWidth();
-      m_toolbarItems.push_back(color);
-
-      x += toolbarWidth;
-      x += hackforge::toolbar_top_level_menu_horizontal_spacing;
     }
     {
       TopLevelMenuItem view;
@@ -374,6 +409,32 @@ public:
           m_toolbarItems[toolbarIndex].SetChildMenuItemCheckedState(i, checkedState);
       }
   }
+
+  void EnableToolAttributes(int attribs)
+  {
+      TopLevelMenuItem& attribMenuItem = m_toolbarItems[2];
+      float x = attribMenuItem.GetLeft();
+
+      attribMenuItem.ClearItems();
+
+      if (attribs & ToolAttributes::Colour)
+      {
+          attribMenuItem.AddChildMenuItem("Tool Colour", x, OnToolbarSetPenColor);
+      }
+
+      if (attribs & ToolAttributes::Radius)
+      {
+          attribMenuItem.AddChildMenuItem("Tool Radius", x, OnToolbarSetPenRadius);
+      }
+
+      if (attribs & ToolAttributes::Angle)
+      {
+          attribMenuItem.AddChildMenuItem("Tool Angle", x, OnToolbarSetPenAngle);
+      }
+
+      attribMenuItem.FinishLayout(x);
+  }
+
 };
 
 } // namespace hackforge
