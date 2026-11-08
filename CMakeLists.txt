@@ -18,7 +18,7 @@ add_executable(hackforge-paint
    src/toolbar.cpp
    src/bucket.cpp
    src/uilayout.cpp
-   $<$<BOOL:${BUILD_TARGET_LINUX}>:src/linux/toolbar_linux.cpp>
+   src/filepicker.cpp
 )
 
 # Find and link in the SDL3 library. For debian-based Linux

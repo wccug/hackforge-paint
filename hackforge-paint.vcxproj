@@ -169,15 +169,17 @@
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
     <ClCompile Include="src\bucket.cpp" />
+    <ClCompile Include="src\filepicker.cpp" />
     <ClCompile Include="src\toolbar.cpp" />
     <ClCompile Include="src\uilayout.cpp" />
-    <ClCompile Include="src\win32\toolbar_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AnglePen.hpp" />
     <ClInclude Include="src\colorpicker.hpp" />
     <ClInclude Include="src\common.hpp" />
     <ClInclude Include="src\dialogbox.hpp" />
+    <ClInclude Include="src\filepicker.hpp" />
+    <ClInclude Include="src\spraypaint.hpp" />
     <ClInclude Include="src\uilayout.hpp" />
     <ClInclude Include="src\Toolbar.hpp" />
   </ItemGroup>

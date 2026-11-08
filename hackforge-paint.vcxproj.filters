@@ -24,10 +24,10 @@
     <ClCompile Include="src\toolbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32\toolbar_win32.cpp">
+    <ClCompile Include="src\uilayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\uilayout.cpp">
+    <ClCompile Include="src\filepicker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\dialogbox.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\spraypaint.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filepicker.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

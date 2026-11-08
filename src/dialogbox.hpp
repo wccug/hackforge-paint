@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <cassert>
+#include <filesystem>
 #include "uilayout.hpp"
 
 enum class DialogResult
@@ -9,6 +10,12 @@ enum class DialogResult
     None,
     OK,
     Cancel
+};
+
+enum class DialogCloseResult
+{
+    KeepOpen,
+    ShouldCloseDialog
 };
 
 class Button
@@ -106,10 +113,11 @@ public:
     enum FormatMode
     {
         Decimal5Digits,
-        Hex6Digits
+        Hex6Digits,
+        AlphanumericChars
     };
 
-    void Layout(float* pLayoutX, float* pLayoutY, float tabWidth, std::string const& labelText, int numericalField, FormatMode formatMode)
+    void Layout(float* pLayoutX, float* pLayoutY, float tabWidth, float textBoxWidth, std::string const& labelText, int numericalField, FormatMode formatMode)
     {
         m_labelText = labelText;
         m_formatMode = formatMode;
@@ -121,7 +129,7 @@ public:
 
         m_textBoxRect.x = *pLayoutX + tabWidth;
         m_textBoxRect.y = *pLayoutY;
-        m_textBoxRect.w = 100;
+        m_textBoxRect.w = textBoxWidth;
         m_textBoxRect.h = hackforge::toolbar_height;
 
         *pLayoutY += hackforge::toolbar_height;
@@ -224,42 +232,10 @@ public:
 
     void OnKeyboardInput(SDL_Keycode key)
     {
-        if (key >= '0' && key <= '9')
+        if (m_clearBufferNext)
         {
-            if (m_clearBufferNext)
-            {
-                m_text.clear();
-                m_clearBufferNext = false;
-            }
-
-            int textLimit = m_formatMode == FormatMode::Decimal5Digits ? 4 : 6;
-            if (m_text.length() < textLimit)
-            {
-                char keyCh = key;
-                m_text.push_back(keyCh);
-            }
-            return;
-        }
-
-        if (m_formatMode == FormatMode::Hex6Digits && key >= 'A' && key <= 'F')
-        {
-            if (m_text.length() < 6)
-            {
-                char keyCh = key;
-                m_text.push_back(keyCh);
-            }
-            return;
-        }
-
-        if (m_formatMode == FormatMode::Hex6Digits && key >= 'a' && key <= 'f')
-        {
-            if (m_text.length() < 6)
-            {
-                char keyCh = key;
-                keyCh = toupper(keyCh);
-                m_text.push_back(keyCh);
-            }
-            return;
+            m_text.clear();
+            m_clearBufferNext = false;
         }
 
         if (key == 8) // backspace
@@ -268,8 +244,73 @@ public:
             {
                 m_text.pop_back();
             }
+            return;
         }
 
+        if (m_formatMode == FormatMode::AlphanumericChars)
+        {
+            static const int textLimit = 28;
+
+            if (m_text.length() < textLimit)
+            {
+                bool isVisibleAscii = key >= 32 && key <= 126;
+                if (isVisibleAscii)
+                {
+                    char keyCh = key;
+                    m_text.push_back(keyCh);
+                }
+            }
+            return;
+        }
+        else if (m_formatMode == FormatMode::Decimal5Digits)
+        {
+            static const int textLimit = 4;
+
+            if (key >= '0' && key <= '9')
+            {
+                if (m_text.length() < textLimit)
+                {
+                    char keyCh = key;
+                    m_text.push_back(keyCh);
+                }
+                return;
+            }
+        }
+        else if (m_formatMode == FormatMode::Hex6Digits)
+        {
+            static const int textLimit = 6;
+
+            if (key >= 'A' && key <= 'F')
+            {
+                if (m_text.length() < textLimit)
+                {
+                    char keyCh = key;
+                    m_text.push_back(keyCh);
+                }
+                return;
+            }
+
+            if (key >= 'a' && key <= 'f')
+            {
+                if (m_text.length() < textLimit)
+                {
+                    char keyCh = key;
+                    keyCh = toupper(keyCh);
+                    m_text.push_back(keyCh);
+                }
+                return;
+            }
+
+            if (key >= '0' && key <= '9')
+            {
+                if (m_text.length() < textLimit)
+                {
+                    char keyCh = key;
+                    m_text.push_back(keyCh);
+                }
+                return;
+            }
+        }
     }
 
     int GetTextFieldNumericValue() const
@@ -289,6 +330,11 @@ public:
         return 0;
     }
 
+    std::string GetTextFieldValue() const
+    {
+        return m_text;
+    }
+
     bool IsFocused() const { return m_focused; }
 
     void SetFocus(bool value) { m_focused = value; }
@@ -300,16 +346,40 @@ public:
 class DialogBoxCommon
 {
 public:
-    std::string m_dialogTitle;
-    float m_menubarTextX;
-    SDL_FRect m_dialogRect;
-
-    DialogBoxCommon(const char* label)
+    enum class DialogType
     {
+        InfoOK,
+        SaveFile_ConfirmOverwrite_OKCancel,
+        SetPenColor,
+        SetUIColor,
+        SetPenRadius,
+        SetPenAngle,
+        NewDocument,
+        Resize,
+        OpenFile,
+        SaveFile
+    };
+
+    DialogBoxCommon(DialogType type, const char* label)
+    {
+        m_type = type;
         m_dialogTitle = label;
     }
 
+    DialogType GetType() const { return m_type; }
+
+    virtual void OnMouseMove(float x, float y, bool mouseButtonDown) = 0;
+    virtual DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) = 0;
+    virtual void OnMouseWheel(SDL_MouseWheelDirection dir, float x, float y) {};
+    virtual DialogCloseResult OnKeyboardInput(SDL_Keycode key) = 0;
+    virtual void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) = 0;
+    virtual DialogResult GetDialogResult() const = 0;
+
 protected:
+    DialogType m_type;
+    std::string m_dialogTitle;
+    float m_menubarTextX;
+    SDL_FRect m_dialogRect;
 
     void LayoutCommon(float dialogRectWidth)
     {
@@ -358,138 +428,96 @@ protected:
     }
 };
 
-// A simple dialog box with an 'OK' button
-class InfoDialogBox : public DialogBoxCommon
+class SingleNumberInputDialogBox : public DialogBoxCommon
 {
-    std::vector<std::string> m_text;
-    float m_textX;
-    float m_textY;
-
+    LabelledTextBox m_textBox;
     Button m_okButton;
+    Button m_cancelButton;
+    DialogResult m_dialogResult;
+    int m_minValue;
+    int m_maxValue;
+
 public:
-
-    InfoDialogBox(const char* dialogTitle, int parentWindowWidth, int parentWindowHeight, const char* infoText, int lineLength)
-        : DialogBoxCommon(dialogTitle)
+    SingleNumberInputDialogBox(DialogType type, const char* label, const char* valueLabel, int parentWindowWidth, int parentWindowHeight, int numericValue) 
+        : DialogBoxCommon(type, label)
     {
-        m_text = SetStringWithLineBreaks(infoText, lineLength);
-        Layout(parentWindowWidth, parentWindowHeight);
+        m_dialogResult = DialogResult::None;
+        Layout(parentWindowWidth, parentWindowHeight, numericValue, valueLabel);
     }
 
-    static std::vector<std::string> SetStringWithLineBreaks(const char* infoText, int lineLength)
-    {
-        std::vector<std::string> result;
-
-        std::string input = infoText;
-        int lastSpaceIndex = -1;
-        size_t startOfCurrentLine = 0;
-        for (size_t i = 0; i < input.length(); ++i)
-        {
-            if (input[i] == '\n')
-            {
-                size_t lineLength = i - startOfCurrentLine;
-                std::string line = input.substr(startOfCurrentLine, lineLength);
-                result.push_back(line);
-                lastSpaceIndex = -1;
-                startOfCurrentLine = i + 1;
-                continue;
-            }
-
-            if (input[i] == ' ')
-            {
-                lastSpaceIndex = static_cast<int>(i);
-            }
-            int currentLineLength = static_cast<int>(i - startOfCurrentLine);
-            if (currentLineLength >= lineLength)
-            {
-                if (lastSpaceIndex == -1)
-                {
-                    // Emergency break
-                    size_t lineLength = i - startOfCurrentLine;
-                    std::string line = input.substr(startOfCurrentLine, lineLength);
-                    result.push_back(line);
-                    startOfCurrentLine = i;
-                }
-                else
-                {
-                    // Typical line break
-                    size_t lineLength = lastSpaceIndex - startOfCurrentLine;
-                    std::string line = input.substr(startOfCurrentLine, lineLength);
-                    result.push_back(line);
-
-                    startOfCurrentLine = lastSpaceIndex + 1;
-                    lastSpaceIndex = -1;
-                }
-            }
-        }
-        // Flush the remaining input, if any
-        if (startOfCurrentLine < input.length())
-        {
-            size_t lineLength = input.length() - startOfCurrentLine;
-            std::string line = input.substr(startOfCurrentLine, lineLength);
-            result.push_back(line);
-        }
-
-        // More than 14 lines is unlikely to fit, given the font sizes that have been chosen. arbitrarily chop it.
-        if (result.size() > 14)
-        {
-            assert(false);
-            result.resize(14);
-        }
-
-        return result;
-    }
-
-    void OnMouseMove(float x, float y)
+    void OnMouseMove(float x, float y, bool) override
     {
         m_okButton.OnMouseMove(x, y);
+        m_cancelButton.OnMouseMove(x, y);
     }
 
-
-    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
+        if (m_cancelButton.IsHighlighted())
+        {
+            m_dialogResult = DialogResult::Cancel;
+            return DialogCloseResult::ShouldCloseDialog;
+        }
+
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
+            m_dialogResult = DialogResult::OK;
+            return DialogCloseResult::ShouldCloseDialog;
         }
+
+        m_textBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
-        if (key == 13 || key == 27) // Enter or escape
+        if (key == SDLK_RETURN)
         {
-            *pCloseDialog = true;
-            return;
+            m_dialogResult = DialogResult::OK;
+            return DialogCloseResult::ShouldCloseDialog;
         }
+
+        if (key == SDLK_ESCAPE)
+        {
+            m_dialogResult = DialogResult::Cancel;
+            return DialogCloseResult::ShouldCloseDialog;
+        }
+
+        if (m_textBox.IsFocused())
+        {
+            m_textBox.OnKeyboardInput(key);
+            return DialogCloseResult::KeepOpen;
+        }
+
+        return DialogCloseResult::KeepOpen;
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
-
-        SDL_SetRenderScale(renderer, hackforge::toolbar_text_scaling, hackforge::toolbar_text_scaling);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-        float layoutY = m_textY;
-        for (size_t i = 0; i < m_text.size(); ++i)
-        {
-            SDL_RenderDebugText(
-                renderer,
-                m_textX / hackforge::toolbar_text_scaling,
-                layoutY / hackforge::toolbar_text_scaling + (hackforge::toolbar_height / (hackforge::toolbar_text_scaling * 4)),
-                m_text[i].c_str());
-
-            layoutY += hackforge::toolbar_height;
-        }
-
+        m_textBox.Draw(renderer, uiColor);
         m_okButton.Draw(renderer, uiColor);
+        m_cancelButton.Draw(renderer, uiColor);
+    }
+
+    DialogResult GetDialogResult() const override
+    {
+        return m_dialogResult;
+    }
+
+    int GetRequestedValue()
+    {
+        int value = m_textBox.GetTextFieldNumericValue();
+        return value;
     }
 
 private:
-    void Layout(int parentWindowWidth, int parentWindowHeight)
+
+    void Layout(int parentWindowWidth, int parentWindowHeight, int numericValue, const char* valueLabel)
     {
         // Size chosen based on the baked-in choice of elements on the dialog
-        int dialogWidth = 500;
-        int dialogHeight = 132 + static_cast<int>(m_text.size()) * hackforge::toolbar_height;
+        int dialogWidth = 300;
+        int dialogHeight = 260;
 
         // Center the dialog
         m_dialogRect.x = static_cast<float>((parentWindowWidth / 2) - (dialogWidth / 2));
@@ -498,16 +526,19 @@ private:
         m_dialogRect.w = static_cast<float>(dialogWidth);
         m_dialogRect.h = static_cast<float>(dialogHeight);
 
-        m_textX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
-        m_textY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
-
-        // Position the OK button
-        float okButtonWidth = hackforge::GetRenderedTextWidthInPixels(2) + hackforge::sc_dialogbox_margin + hackforge::sc_dialogbox_margin;
-        float okButtonX = m_dialogRect.x + (m_dialogRect.w / 2) - (okButtonWidth / 2);
-        float okButtonY = m_dialogRect.y + m_dialogRect.h - hackforge::toolbar_height - hackforge::toolbar_height;
-        m_okButton.Layout(&okButtonX, &okButtonY, "OK", hackforge::sc_dialogbox_margin);
-
+        // Center the menubar text
         LayoutCommon(m_dialogRect.w);
+
+        float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
+        float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
+
+        m_textBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, 100, valueLabel, numericValue, LabelledTextBox::FormatMode::Decimal5Digits);
+        layoutY += hackforge::sc_dialogbox_margin;
+        layoutY += hackforge::sc_dialogbox_margin;
+
+        m_okButton.Layout(&layoutX, &layoutY, "OK", hackforge::sc_dialogbox_margin);
+        layoutX += hackforge::sc_dialogbox_tabStop;
+        m_cancelButton.Layout(&layoutX, &layoutY, "Cancel", hackforge::sc_dialogbox_margin);
     }
 };
 
@@ -521,48 +552,38 @@ class SizeInputDialogBox : public DialogBoxCommon
 
 public:
 
-    enum class Mode
-    {
-        NewDocument,
-        Resize
-    };
-
-    SizeInputDialogBox(const char* label, int parentWindowWidth, int parentWindowHeight, Mode mode) : DialogBoxCommon(label)
+    SizeInputDialogBox(DialogType type, const char* label, int parentWindowWidth, int parentWindowHeight) : DialogBoxCommon(type, label)
     {
         m_dialogResult = DialogResult::None;
-        m_mode = mode;
         Layout(parentWindowWidth, parentWindowHeight);
     }
 
-    Mode GetMode() const { return m_mode; }
-
-    void OnMouseMove(float x, float y)
+    void OnMouseMove(float x, float y, bool) override
     {
         m_okButton.OnMouseMove(x, y);
         m_cancelButton.OnMouseMove(x, y);
     }
 
-    void OnMouseClick(float x, float y, bool* pCloseDialog)
+    DialogCloseResult OnMouseClick(float x, float y, SDL_Renderer* renderer) override
     {
         if (m_cancelButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_okButton.IsHighlighted())
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         m_widthTextBox.OnMouseClick(x, y);
         m_heightTextBox.OnMouseClick(x, y);
+        return DialogCloseResult::KeepOpen;
     }
 
-    void OnKeyboardInput(SDL_Keycode key, bool* pCloseDialog)
+    DialogCloseResult OnKeyboardInput(SDL_Keycode key) override
     {
         if (key == 9) // tab
         {
@@ -576,37 +597,37 @@ public:
                 m_widthTextBox.SetFocus(true);
                 m_heightTextBox.SetFocus(false);
             }
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
-        if (key == 13) // Enter
+        if (key == SDLK_RETURN)
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::OK;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
-        if (key == 27) // Escape
+        if (key == SDLK_ESCAPE)
         {
-            *pCloseDialog = true;
             m_dialogResult = DialogResult::Cancel;
-            return;
+            return DialogCloseResult::ShouldCloseDialog;
         }
 
         if (m_widthTextBox.IsFocused())
         {
             m_widthTextBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
 
         if (m_heightTextBox.IsFocused())
         {
             m_heightTextBox.OnKeyboardInput(key);
-            return;
+            return DialogCloseResult::KeepOpen;
         }
+
+        return DialogCloseResult::KeepOpen;
     }
 
-    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor)
+    void ShowDialog(SDL_Renderer* renderer, SDL_Color uiColor) override
     {
         DrawBlankWindow(renderer, uiColor);
         m_widthTextBox.Draw(renderer, uiColor);
@@ -615,7 +636,7 @@ public:
         m_cancelButton.Draw(renderer, uiColor);
     }
 
-    DialogResult GetDialogResult() const
+    DialogResult GetDialogResult() const override
     {
         return m_dialogResult;
     }
@@ -633,8 +654,6 @@ public:
     }
 
 private:
-
-    Mode m_mode;
 
     void Layout(int parentWindowWidth, int parentWindowHeight)
     {
@@ -655,10 +674,10 @@ private:
         float layoutX = m_dialogRect.x + hackforge::sc_dialogbox_margin;
         float layoutY = m_dialogRect.y + hackforge::toolbar_height + hackforge::sc_dialogbox_margin;
 
-        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Width:", parentWindowWidth, LabelledTextBox::FormatMode::Decimal5Digits);
+        m_widthTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, 100, "Width:", parentWindowWidth, LabelledTextBox::FormatMode::Decimal5Digits);
         layoutY += hackforge::sc_dialogbox_margin;
 
-        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, "Height:", parentWindowHeight, LabelledTextBox::FormatMode::Decimal5Digits);
+        m_heightTextBox.Layout(&layoutX, &layoutY, hackforge::sc_dialogbox_tabStop, 100, "Height:", parentWindowHeight, LabelledTextBox::FormatMode::Decimal5Digits);
         layoutY += hackforge::sc_dialogbox_margin;
         layoutY += hackforge::sc_dialogbox_margin;
 
