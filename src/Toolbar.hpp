@@ -15,7 +15,8 @@ enum class Tool
     AnglePen,
     PaintBucket,
     Eyedropper,
-    Spraypaint
+    Spraypaint,
+    Line
 };
 
 namespace ToolAttributes
@@ -44,6 +45,7 @@ void OnToolbarSetAnglePenTool();
 void OnToolbarSetPaintBucketTool();
 void OnToolbarSetEyedropperTool();
 void OnToolbarSetSpraypaintTool();
+void OnToolbarSetLineTool();
 void OnToolbarUndo();
 void OnToolbarHorizontalFlip();
 void OnToolbarVerticalFlip();
@@ -289,6 +291,7 @@ public:
       tool.AddChildMenuItem("Bucket", x, OnToolbarSetPaintBucketTool);
       tool.AddChildMenuItem("Eyedropper", x, OnToolbarSetEyedropperTool);
       tool.AddChildMenuItem("Spraypaint", x, OnToolbarSetSpraypaintTool);
+      tool.AddChildMenuItem("Line", x, OnToolbarSetLineTool);
       tool.FinishLayout(x);
       float toolbarWidth = tool.GetWidth();
       m_toolbarItems.push_back(tool);

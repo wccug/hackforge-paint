@@ -136,6 +136,12 @@ void OnToolbarSetSpraypaintTool() {
     hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour | ToolAttributes::Radius);
 }
 
+void OnToolbarSetLineTool() {
+    hackforge::currentTool = Tool::Line;
+    hackforge::toolbar.CheckItemAndUncheckOthers(1, 6);
+    hackforge::toolbar.EnableToolAttributes(ToolAttributes::Colour | ToolAttributes::Radius);
+}
+
 void OnToolbarAbout()
 {
     hackforge::dialogs.emplace_back(std::make_unique<InfoDialogBox>(
