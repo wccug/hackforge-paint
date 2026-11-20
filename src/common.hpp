@@ -9,6 +9,7 @@
 #include "uilayout.hpp"
 #include "dialogbox.hpp"
 #include "colorpicker.hpp"
+#include "linetool.hpp"
 
 namespace hackforge {
 
@@ -47,6 +48,7 @@ inline Toolbar toolbar;
 inline Tool currentTool;
 inline AnglePen anglePen;
 inline Spraypaint spraypaint;
+inline LineTool lineTool;
 
 inline std::vector<std::unique_ptr<DialogBoxCommon>> dialogs;
 

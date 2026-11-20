@@ -861,12 +861,33 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         }
     }
 
+    // Add handlers here that need to be notified when the pen is lifted, not just when it's down
+    if (hackforge::currentTool == hackforge::Tool::Line)
+    {
+        if (hackforge::onPenDownChange)
+        {
+            BackupUndoBuffer();
+        }
+
+        hackforge::lineTool.Update(
+            hackforge::renderer,
+            hackforge::penDown,
+            hackforge::currentPenX,
+            hackforge::currentPenY,
+            hackforge::penColor,
+            hackforge::penRadius);
+    }
+
     hackforge::onPenDownChange = false;
 
     // --- 2. UI Layout Render Pass (Drawn over the canvas) ---
     SDL_SetRenderTarget(hackforge::renderer, nullptr); // Sets the window as the target
     SDL_SetRenderScale(hackforge::renderer, 1.0f, 1.0f);
     SDL_RenderTexture(hackforge::renderer, hackforge::canvas, NULL, NULL);
+    if (hackforge::currentTool == hackforge::Tool::Line) {
+        hackforge::lineTool.RenderUI(hackforge::renderer);
+    }
+
     hackforge::toolbar.Render(hackforge::renderer, hackforge::buttonColor);
 
     // --- 3. Draw modal dialogs ---
